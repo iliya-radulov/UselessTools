@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧵 String Art Pro · A4 export</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    body {
+      background: #12121f;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
+    }
+    .app {
+      max-width: 1400px;
+      width: 100%;
+      background: #1e1e32;
+      border-radius: 36px;
+      padding: 28px 32px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+      color: #ececf5;
+    }
+    h1 {
+      margin: 0 0 8px 0;
+      font-weight: 500;
+      font-size: 2.1rem;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #3d3d60;
+      padding-bottom: 18px;
+    }
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 30px;
+      margin-top: 20px;
+    }
+    @media (max-width: 880px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .canvas-wrapper {
+      background: #141425;
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: inset 0 0 0 1px #3a3a5a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #canvas-container {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      max-height: 720px;
+      background: #0a0a16;
+      border-radius: 18px;
+      overflow: hidden;
+      position: relative;
+    }
+    #canvas-container canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain;
+    }
+    .upload-row {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .upload-row label {
+      background: #333355;
+      padding: 10px 22px;
+      border-radius: 40px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #5a5a80;
+      flex: 1 1 auto;
+    }
+    .upload-row label:hover {
+      background: #44446a;
+    }
+    .upload-row input[type="file"] {
+      display: none;
+    }
+    .btn {
+      background: #6c5ce7;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 40px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: 0.15s;
+      border: 1px solid #8a7af0;
+      flex: 1 1 auto;
+      text-align: center;
+    }
+    .btn:hover {
+      background: #7d6ff0;
+      transform: scale(0.97);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #6c5ce7;
+      color: #cbc4ff;
+    }
+    .btn-outline:hover {
+      background: #2f2f50;
+    }
+    .btn-pdf {
+      background: #2d7a5a;
+      border-color: #3e9a74;
+    }
+    .btn-pdf:hover {
+      background: #3a8f6a;
+    }
+    .panel {
+      background: #1a1a30;
+      border-radius: 24px;
+      padding: 22px 20px;
+      box-shadow: inset 0 0 0 1px #3a3a5a;
+    }
+    .panel h3 {
+      margin: 0 0 18px 0;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      color: #b0b0d9;
+      border-bottom: 1px solid #333355;
+      padding-bottom: 12px;
+    }
+    .slider-group {
+      margin-bottom: 20px;
+    }
+    .slider-group label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: #cbc4ff;
+      margin-bottom: 4px;
+    }
+    .slider-group input[type="range"] {
+      width: 100%;
+      height: 6px;
+      background: #34345a;
+      border-radius: 10px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .slider-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #a29bfe;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 8px #6c5ce7;
+    }
+    .slider-group input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      background: #a29bfe;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 12px 0 8px;
+      flex-wrap: wrap;
+    }
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      color: #d0d0f0;
+    }
+    .info-badge {
+      background: #262648;
+      border-radius: 40px;
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      color: #b0b0dd;
+      margin-top: 12px;
+      text-align: center;
+      width: 100%;
+    }
+    .flex-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    hr {
+      border: 0.5px solid #333355;
+      margin: 18px 0;
+    }
+    .badge-pin {
+      display: inline-block;
+      background: #2d2d52;
+      padding: 2px 10px;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      color: #bdbdff;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>🧵 String Art · A4 Export</h1>
+  <div class="main-grid">
+    <!-- left: canvas -->
+    <div class="canvas-wrapper">
+      <div id="canvas-container">
+        <canvas id="stringCanvas" width="800" height="800"></canvas>
+      </div>
+      <div class="upload-row">
+        <label for="imageUpload">📁 Upload Image</label>
+        <input type="file" id="imageUpload" accept="image/*">
+        <button class="btn" id="renderBtn">⚡ Render</button>
+        <button class="btn btn-outline" id="resetBtn">↺ Reset</button>
+      </div>
+      <div class="flex-row" style="width:100%;">
+        <button class="btn btn-pdf" id="pdfBtn" style="flex:2;">📄 Export PDF (A4)</button>
+        <button class="btn btn-outline" id="printBtn" style="flex:1;">🖨️ Print</button>
+      </div>
+      <div class="info-badge" id="infoText">⬆️ Upload image · adjust parameters →</div>
+    </div>
+
+    <!-- right: controls -->
+    <div class="panel">
+      <h3>⚙️ Thread & Image</h3>
+      <div class="slider-group">
+        <label>📏 Canvas size <span id="sizeLabel">800</span></label>
+        <input type="range" id="sizeSlider" min="600" max="1600" value="800" step="20">
+      </div>
+      <div class="slider-group">
+        <label>📍 Pins (max 500) <span id="pinsLabel">120</span></label>
+        <input type="range" id="pinsSlider" min="30" max="500" value="120" step="2">
+      </div>
+      <div class="slider-group">
+        <label>✏️ Lines (density) <span id="linesLabel">200</span></label>
+        <input type="range" id="linesSlider" min="40" max="700" value="200" step="5">
+      </div>
+      <div class="slider-group">
+        <label>🧵 Thread width <span id="widthLabel">2.2</span></label>
+        <input type="range" id="widthSlider" min="0.5" max="6" value="2.2" step="0.1">
+      </div>
+      <hr>
+      <div class="slider-group">
+        <label>🔆 Contrast <span id="contrastLabel">1.2</span></label>
+        <input type="range" id="contrastSlider" min="0.5" max="2.5" value="1.2" step="0.05">
+      </div>
+      <div class="slider-group">
+        <label>🔎 Sharpness <span id="sharpnessLabel">1.0</span></label>
+        <input type="range" id="sharpnessSlider" min="0.2" max="3.0" value="1.0" step="0.1">
+      </div>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="bgRemoveCheck"> 🧽 Remove background (white)</label>
+        <label><input type="checkbox" id="showPinNumbers" checked> 🔢 Show pin numbers</label>
+      </div>
+      <div class="flex-row">
+        <button class="btn" id="applyFiltersBtn" style="flex:2;">✨ Apply filters</button>
+        <button class="btn btn-outline" id="resetFiltersBtn" style="flex:1;">↺</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- html2pdf library for PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+  (function() {
+    // ---------- DOM refs ----------
+    const canvas = document.getElementById('stringCanvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('canvas-container');
+
+    const sizeSlider = document.getElementById('sizeSlider');
+    const sizeLabel = document.getElementById('sizeLabel');
+    const pinsSlider = document.getElementById('pinsSlider');
+    const pinsLabel = document.getElementById('pinsLabel');
+    const linesSlider = document.getElementById('linesSlider');
+    const linesLabel = document.getElementById('linesLabel');
+    const widthSlider = document.getElementById('widthSlider');
+    const widthLabel = document.getElementById('widthLabel');
+    const contrastSlider = document.getElementById('contrastSlider');
+    const contrastLabel = document.getElementById('contrastLabel');
+    const sharpnessSlider = document.getElementById('sharpnessSlider');
+    const sharpnessLabel = document.getElementById('sharpnessLabel');
+    const bgRemoveCheck = document.getElementById('bgRemoveCheck');
+    const showPinNumbers = document.getElementById('showPinNumbers');
+    const fileInput = document.getElementById('imageUpload');
+    const renderBtn = document.getElementById('renderBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+    const pdfBtn = document.getElementById('pdfBtn');
+    const printBtn = document.getElementById('printBtn');
+    const infoText = document.getElementById('infoText');
+
+    // ---------- state ----------
+    let originalImage = null;        // ImageData (raw)
+    let processedImageData = null;   // ImageData after filters
+    let currentSize = 800;
+    let currentPins = 120;
+    let currentLines = 200;
+    let currentWidth = 2.2;
+    let currentContrast = 1.2;
+    let currentSharpness = 1.0;
+    let bgRemove = false;
+    let showNumbers = true;
+
+    // ---------- helpers ----------
+    function updateLabels() {
+      sizeLabel.textContent = sizeSlider.value;
+      pinsLabel.textContent = pinsSlider.value;
+      linesLabel.textContent = linesSlider.value;
+      widthLabel.textContent = parseFloat(widthSlider.value).toFixed(1);
+      contrastLabel.textContent = parseFloat(contrastSlider.value).toFixed(2);
+      sharpnessLabel.textContent = parseFloat(sharpnessSlider.value).toFixed(1);
+      currentSize = parseInt(sizeSlider.value, 10);
+      currentPins = parseInt(pinsSlider.value, 10);
+      currentLines = parseInt(linesSlider.value, 10);
+      currentWidth = parseFloat(widthSlider.value);
+      currentContrast = parseFloat(contrastSlider.value);
+      currentSharpness = parseFloat(sharpnessSlider.value);
+      bgRemove = bgRemoveCheck.checked;
+      showNumbers = showPinNumbers.checked;
+    }
+
+    function resizeCanvas(size) {
+      canvas.width = size;
+      canvas.height = size;
+      canvas.style.width = size + 'px';
+      canvas.style.height = size + 'px';
+      if (processedImageData) {
+        renderStringArt();
+      } else if (originalImage) {
+        applyFiltersAndRender();
+      } else {
+        drawPlaceholder();
+      }
+    }
+
+    function drawPlaceholder() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#0a0a16';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#5f5f8a';
+      ctx.font = '22px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🖼️ Upload image', canvas.width/2, canvas.height/2 - 24);
+      ctx.font = '16px system-ui, sans-serif';
+      ctx.fillStyle = '#7a7aa0';
+      ctx.fillText('adjust & render · export PDF', canvas.width/2, canvas.height/2 + 30);
+    }
+
+    // ---------- image processing (contrast, sharpness, bg removal) ----------
+    function processImageData(imageData, contrast, sharpness, removeBg) {
+      const data = imageData.data;
+      const w = imageData.width, h = imageData.height;
+      const output = new ImageData(new Uint8ClampedArray(data), w, h);
+      const outData = output.data;
+
+      const factor = (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
+      const bias = 128 * (1 - factor);
+
+      let tempData = null;
+      if (sharpness !== 1.0) {
+        const temp = new ImageData(new Uint8ClampedArray(data), w, h);
+        const tData = temp.data;
+        for (let i = 0; i < data.length; i++) tData[i] = data[i];
+        const kernel = [[0, -1, 0], [-1, 5, -1], [0, -1, 0]];
+        for (let y = 1; y < h-1; y++) {
+          for (let x = 1; x < w-1; x++) {
+            const idx = (y * w + x) * 4;
+            let r = 0, g = 0, b = 0;
+            for (let ky = -1; ky <= 1; ky++) {
+              for (let kx = -1; kx <= 1; kx++) {
+                const px = x + kx, py = y + ky;
+                const pIdx = (py * w + px) * 4;
+                const kVal = kernel[ky+1][kx+1];
+                r += tData[pIdx] * kVal;
+                g += tData[pIdx+1] * kVal;
+                b += tData[pIdx+2] * kVal;
+              }
+            }
+            const sharpFactor = 0.2 + 0.8 * sharpness;
+            outData[idx] = Math.min(255, Math.max(0, tData[idx] * (1 - sharpFactor) + r * sharpFactor));
+            outData[idx+1] = Math.min(255, Math.max(0, tData[idx+1] * (1 - sharpFactor) + g * sharpFactor));
+            outData[idx+2] = Math.min(255, Math.max(0, tData[idx+2] * (1 - sharpFactor) + b * sharpFactor));
+            outData[idx+3] = tData[idx+3];
+          }
+        }
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            if (y === 0 || y === h-1 || x === 0 || x === w-1) {
+              const idx = (y * w + x) * 4;
+              outData[idx] = tData[idx];
+              outData[idx+1] = tData[idx+1];
+              outData[idx+2] = tData[idx+2];
+              outData[idx+3] = tData[idx+3];
+            }
+          }
+        }
+        for (let i = 0; i < outData.length; i+=4) {
+          outData[i] = Math.min(255, Math.max(0, factor * outData[i] + bias));
+          outData[i+1] = Math.min(255, Math.max(0, factor * outData[i+1] + bias));
+          outData[i+2] = Math.min(255, Math.max(0, factor * outData[i+2] + bias));
+        }
+      } else {
+        for (let i = 0; i < outData.length; i+=4) {
+          outData[i] = Math.min(255, Math.max(0, factor * outData[i] + bias));
+          outData[i+1] = Math.min(255, Math.max(0, factor * outData[i+1] + bias));
+          outData[i+2] = Math.min(255, Math.max(0, factor * outData[i+2] + bias));
+        }
+      }
+
+      if (removeBg) {
+        for (let i = 0; i < outData.length; i+=4) {
+          const r = outData[i], g = outData[i+1], b = outData[i+2];
+          if (r > 200 && g > 200 && b > 200) {
+            outData[i+3] = 0;
+          } else {
+            outData[i+3] = 255;
+          }
+        }
+      }
+      return output;
+    }
+
+    function applyFiltersAndRender() {
+      if (!originalImage) {
+        infoText.textContent = '⚠️ Please upload an image first.';
+        return;
+      }
+      const processed = processImageData(originalImage, currentContrast, currentSharpness, bgRemove);
+      processedImageData = processed;
+      renderStringArt();
+      infoText.textContent = '✅ Filters applied · render updated.';
+    }
+
+    // ---------- string art render (core) ----------
+    function renderStringArt() {
+      if (!processedImageData) {
+        if (originalImage) {
+          processedImageData = originalImage;
+        } else {
+          drawPlaceholder();
+          return;
+        }
+      }
+
+      const size = canvas.width;
+      const half = size / 2;
+      const radius = half * 0.88;
+      const pins = currentPins;
+      const lines = currentLines;
+      const lineWidth = currentWidth;
+
+      const imgData = processedImageData;
+      const data = imgData.data;
+      const w = imgData.width, h = imgData.height;
+
+      ctx.clearRect(0, 0, size, size);
+      ctx.fillStyle = '#0a0a16';
+      ctx.fillRect(0, 0, size, size);
+
+      // pin positions
+      const pinPositions = [];
+      for (let i = 0; i < pins; i++) {
+        const angle = (i / pins) * 2 * Math.PI - Math.PI/2;
+        const x = half + radius * Math.cos(angle);
+        const y = half + radius * Math.sin(angle);
+        pinPositions.push({x, y});
+      }
+
+      // draw threads
+      ctx.strokeStyle = '#f2e9c2';
+      ctx.lineWidth = lineWidth;
+      ctx.shadowColor = '#b8a87a';
+      ctx.shadowBlur = 2;
+
+      for (let l = 0; l < lines; l++) {
+        const idxA = Math.floor(Math.random() * pins);
+        const pA = pinPositions[idxA];
+        const idxB = Math.floor(Math.random() * pins);
+        const pB = pinPositions[idxB];
+
+        let totalBrightness = 0;
+        const steps = 12;
+        for (let s = 0; s < steps; s++) {
+          const t = s / steps;
+          const px = Math.floor(pA.x + (pB.x - pA.x) * t);
+          const py = Math.floor(pA.y + (pB.y - pA.y) * t);
+          if (px >= 0 && px < w && py >= 0 && py < h) {
+            const idx = (py * w + px) * 4;
+            const r = data[idx] || 0;
+            const g = data[idx+1] || 0;
+            const b = data[idx+2] || 0;
+            totalBrightness += (r + g + b) / 3;
+          }
+        }
+        const avgBright = totalBrightness / steps;
+        const prob = Math.min(1, Math.max(0.05, (255 - avgBright) / 200));
+        if (Math.random() < prob) {
+          ctx.beginPath();
+          ctx.moveTo(pA.x, pA.y);
+          ctx.lineTo(pB.x, pB.y);
+          ctx.stroke();
+        }
+      }
+
+      // draw pin dots + numbers
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#e0d6b0';
+      ctx.font = `${Math.max(10, size / 50)}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i < pinPositions.length; i++) {
+        const p = pinPositions[i];
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, Math.max(3, size / 180), 0, 2 * Math.PI);
+        ctx.fill();
+        if (showNumbers) {
+          ctx.fillStyle = '#b8a87a';
+          ctx.fillText(i+1, p.x, p.y - Math.max(10, size / 25));
+          ctx.fillStyle = '#e0d6b0';
+        }
+      }
+      ctx.shadowBlur = 0;
+      infoText.textContent = `✨ String art · ${pins} pins · ${lines} lines · ${size}×${size}`;
+    }
+
+    // ---------- load image ----------
+    function loadImage(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const size = parseInt(sizeSlider.value, 10);
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = size;
+          tempCanvas.height = size;
+          const tCtx = tempCanvas.getContext('2d');
+          tCtx.drawImage(img, 0, 0, size, size);
+          const imageData = tCtx.getImageData(0, 0, size, size);
+          originalImage = imageData;
+          applyFiltersAndRender();
+          infoText.textContent = `📸 Image loaded (${size}×${size})`;
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ---------- reset ----------
+    function resetAll() {
+      sizeSlider.value = '800';
+      pinsSlider.value = '120';
+      linesSlider.value = '200';
+      widthSlider.value = '2.2';
+      contrastSlider.value = '1.2';
+      sharpnessSlider.value = '1.0';
+      bgRemoveCheck.checked = false;
+      showPinNumbers.checked = true;
+      updateLabels();
+      originalImage = null;
+      processedImageData = null;
+      resizeCanvas(800);
+      drawPlaceholder();
+      infoText.textContent = '↺ Reset to defaults · upload an image.';
+      fileInput.value = '';
+    }
+
+    // ---------- PDF export (A4) ----------
+    function exportPDF() {
+      if (!processedImageData && !originalImage) {
+        infoText.textContent = '⚠️ No image/art to export. Render first.';
+        return;
+      }
+      // render at high quality on a temporary canvas
+      const exportSize = 1600;
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = exportSize;
+      tempCanvas.height = exportSize;
+      const tCtx = tempCanvas.getContext('2d');
+      
+      // copy current art to temp canvas
+      const currentData = processedImageData || originalImage;
+      if (currentData) {
+        // we need to re-render on temp canvas with same parameters but high-res
+        // we'll just draw the current canvas scaled up (quick but works)
+        tCtx.drawImage(canvas, 0, 0, exportSize, exportSize);
+      } else {
+        infoText.textContent = '⚠️ No data to export.';
+        return;
+      }
+
+      // create a wrapper for PDF
+      const wrapper = document.createElement('div');
+      wrapper.style.width = '1600px';
+      wrapper.style.height = '1600px';
+      wrapper.style.background = '#0a0a16';
+      wrapper.style.display = 'flex';
+      wrapper.style.alignItems = 'center';
+      wrapper.style.justifyContent = 'center';
+      wrapper.style.padding = '20px';
+      const img = document.createElement('img');
+      img.src = tempCanvas.toDataURL('image/png');
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'contain';
+      wrapper.appendChild(img);
+
+      // A4 options
+      const opt = {
+        margin:       0.4,
+        filename:     'string-art-a4.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(wrapper).save().then(() => {
+        infoText.textContent = '📄 PDF exported (A4)';
+      }).catch(err => {
+        infoText.textContent = '❌ PDF export error: ' + err.message;
+      });
+    }
+
+    // ---------- print ----------
+    function printArt() {
+      if (!processedImageData && !originalImage) {
+        infoText.textContent = '⚠️ No art to print.';
+        return;
+      }
+      const dataUrl = canvas.toDataURL('image/png');
+      const win = window.open('', '_blank');
+      if (!win) {
+        infoText.textContent = '⚠️ Popup blocked. Please allow popups for print.';
+        return;
+      }
+      win.document.write(`
+        <html><head><title>String Art Print</title>
+        <style>body { margin:0; display:flex; justify-content:center; align-items:center; height:100vh; background:#0a0a16; } img { max-width:100%; max-height:100%; object-fit:contain; }</style>
+        </head><body><img src="${dataUrl}" onload="window.print();"></body></html>
+      `);
+      win.document.close();
+    }
+
+    // ---------- event binding ----------
+    function init() {
+      [sizeSlider, pinsSlider, linesSlider, widthSlider, contrastSlider, sharpnessSlider].forEach(slider => {
+        slider.addEventListener('input', () => updateLabels());
+      });
+      bgRemoveCheck.addEventListener('change', () => { bgRemove = bgRemoveCheck.checked; });
+      showPinNumbers.addEventListener('change', () => { showNumbers = showPinNumbers.checked; if (processedImageData) renderStringArt(); });
+
+      sizeSlider.addEventListener('change', () => {
+        const newSize = parseInt(sizeSlider.value, 10);
+        if (originalImage) {
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = newSize;
+          tempCanvas.height = newSize;
+          const tCtx = tempCanvas.getContext('2d');
+          const tempImg = new ImageData(originalImage.data, originalImage.width, originalImage.height);
+          const offCanvas = document.createElement('canvas');
+          offCanvas.width = originalImage.width;
+          offCanvas.height = originalImage.height;
+          const offCtx = offCanvas.getContext('2d');
+          offCtx.putImageData(tempImg, 0, 0);
+          tCtx.drawImage(offCanvas, 0, 0, newSize, newSize);
+          originalImage = tCtx.getImageData(0, 0, newSize, newSize);
+          applyFiltersAndRender();
+        } else {
+          resizeCanvas(newSize);
+        }
+      });
+
+      renderBtn.addEventListener('click', () => {
+        if (!originalImage) { infoText.textContent = '⚠️ No image loaded.'; return; }
+        applyFiltersAndRender();
+      });
+
+      applyFiltersBtn.addEventListener('click', () => {
+        if (!originalImage) { infoText.textContent = '⚠️ Upload an image first.'; return; }
+        applyFiltersAndRender();
+      });
+
+      resetFiltersBtn.addEventListener('click', () => {
+        contrastSlider.value = '1.2';
+        sharpnessSlider.value = '1.0';
+        bgRemoveCheck.checked = false;
+        updateLabels();
+        if (originalImage) applyFiltersAndRender();
+        else infoText.textContent = 'Filters reset. Upload image.';
+      });
+
+      resetBtn.addEventListener('click', resetAll);
+      pdfBtn.addEventListener('click', exportPDF);
+      printBtn.addEventListener('click', printArt);
+
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) loadImage(e.target.files[0]);
+      });
+
+      updateLabels();
+      resizeCanvas(800);
+      drawPlaceholder();
+    }
+
+    init();
+  })();
+</script>
+</body>
+</html>

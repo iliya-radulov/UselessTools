@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎨 String Art · Image Converter</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    body {
+      background: #1e1e2f;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
+    }
+    .app {
+      max-width: 1280px;
+      width: 100%;
+      background: #2d2d44;
+      border-radius: 32px;
+      padding: 28px 30px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      color: #f0f0f5;
+    }
+    h1 {
+      margin-top: 0;
+      font-weight: 500;
+      font-size: 2rem;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #4a4a6a;
+      padding-bottom: 16px;
+    }
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 28px;
+      margin-top: 18px;
+    }
+    @media (max-width: 860px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .canvas-wrapper {
+      background: #181825;
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: inset 0 0 0 1px #3e3e5e;
+    }
+    #canvas-container {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      max-height: 620px;
+      background: #0d0d18;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+    }
+    #canvas-container canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain;
+    }
+    .upload-row {
+      display: flex;
+      gap: 14px;
+      width: 100%;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .upload-row label {
+      background: #3b3b5c;
+      padding: 10px 20px;
+      border-radius: 40px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #5a5a7e;
+      flex: 1 1 auto;
+    }
+    .upload-row label:hover {
+      background: #4f4f74;
+    }
+    .upload-row input[type="file"] {
+      display: none;
+    }
+    .btn {
+      background: #6c5ce7;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 40px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s;
+      border: 1px solid #8a7af0;
+      flex: 1 1 auto;
+    }
+    .btn:hover {
+      background: #7d6ff0;
+      transform: scale(0.97);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #6c5ce7;
+      color: #cbc4ff;
+    }
+    .btn-outline:hover {
+      background: #3b3b5c;
+    }
+    .panel {
+      background: #22223b;
+      border-radius: 24px;
+      padding: 22px 20px;
+      box-shadow: inset 0 0 0 1px #3f3f5e;
+    }
+    .panel h3 {
+      margin: 0 0 18px 0;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      color: #b6b6d9;
+      border-bottom: 1px solid #3a3a58;
+      padding-bottom: 10px;
+    }
+    .slider-group {
+      margin-bottom: 22px;
+    }
+    .slider-group label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: #cbc4ff;
+      margin-bottom: 4px;
+    }
+    .slider-group input[type="range"] {
+      width: 100%;
+      height: 6px;
+      background: #3d3d60;
+      border-radius: 10px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .slider-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #a29bfe;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 6px #6c5ce7;
+    }
+    .slider-group input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      background: #a29bfe;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+    }
+    .dual-input {
+      display: flex;
+      gap: 12px;
+      margin-top: 6px;
+    }
+    .dual-input span {
+      background: #2b2b48;
+      padding: 4px 12px;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      color: #aeaed6;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 10px 0 8px;
+      flex-wrap: wrap;
+    }
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      color: #d0d0f0;
+    }
+    .info-badge {
+      background: #323252;
+      border-radius: 40px;
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      color: #b8b8e0;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .flex-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    hr {
+      border: 0.5px solid #3a3a5a;
+      margin: 18px 0;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>🧵 String Art · Studio</h1>
+  <div class="main-grid">
+    <!-- left: canvas + upload -->
+    <div class="canvas-wrapper">
+      <div id="canvas-container">
+        <canvas id="stringCanvas" width="600" height="600"></canvas>
+      </div>
+      <div class="upload-row">
+        <label for="imageUpload">📁 Upload Image</label>
+        <input type="file" id="imageUpload" accept="image/*">
+        <button class="btn" id="renderBtn">⚡ Render</button>
+        <button class="btn btn-outline" id="resetBtn">↺ Reset</button>
+      </div>
+      <div class="info-badge" id="infoText">⬆️ Upload an image · adjust parameters →</div>
+    </div>
+
+    <!-- right: controls -->
+    <div class="panel">
+      <h3>⚙️ Thread & Image</h3>
+      <div class="slider-group">
+        <label>📏 Canvas size <span id="sizeLabel">600</span></label>
+        <input type="range" id="sizeSlider" min="300" max="900" value="600" step="10">
+      </div>
+      <div class="slider-group">
+        <label>📍 Pins <span id="pinsLabel">90</span></label>
+        <input type="range" id="pinsSlider" min="30" max="200" value="90" step="2">
+      </div>
+      <div class="slider-group">
+        <label>✏️ Lines (density) <span id="linesLabel">180</span></label>
+        <input type="range" id="linesSlider" min="40" max="500" value="180" step="5">
+      </div>
+      <div class="slider-group">
+        <label>🧵 Thread width <span id="widthLabel">2.4</span></label>
+        <input type="range" id="widthSlider" min="0.5" max="6" value="2.4" step="0.1">
+      </div>
+
+      <hr>
+      <div class="slider-group">
+        <label>🔆 Contrast <span id="contrastLabel">1.2</span></label>
+        <input type="range" id="contrastSlider" min="0.5" max="2.5" value="1.2" step="0.05">
+      </div>
+      <div class="slider-group">
+        <label>🔎 Sharpness <span id="sharpnessLabel">1.0</span></label>
+        <input type="range" id="sharpnessSlider" min="0.2" max="3.0" value="1.0" step="0.1">
+      </div>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="bgRemoveCheck"> 🧽 Remove background (white)</label>
+      </div>
+
+      <div class="flex-row">
+        <button class="btn" id="applyFiltersBtn" style="flex:2;">✨ Apply filters</button>
+        <button class="btn btn-outline" id="resetFiltersBtn" style="flex:1;">↺</button>
+      </div>
+      <div style="margin-top: 6px; font-size:0.8rem; color:#a0a0c0;">
+        <span>💡 Adjust contrast/sharpness, then click "Render"</span>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  (function() {
+    // ---------- DOM refs ----------
+    const canvas = document.getElementById('stringCanvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('canvas-container');
+
+    const sizeSlider = document.getElementById('sizeSlider');
+    const sizeLabel = document.getElementById('sizeLabel');
+    const pinsSlider = document.getElementById('pinsSlider');
+    const pinsLabel = document.getElementById('pinsLabel');
+    const linesSlider = document.getElementById('linesSlider');
+    const linesLabel = document.getElementById('linesLabel');
+    const widthSlider = document.getElementById('widthSlider');
+    const widthLabel = document.getElementById('widthLabel');
+    const contrastSlider = document.getElementById('contrastSlider');
+    const contrastLabel = document.getElementById('contrastLabel');
+    const sharpnessSlider = document.getElementById('sharpnessSlider');
+    const sharpnessLabel = document.getElementById('sharpnessLabel');
+    const bgRemoveCheck = document.getElementById('bgRemoveCheck');
+    const fileInput = document.getElementById('imageUpload');
+    const renderBtn = document.getElementById('renderBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+    const infoText = document.getElementById('infoText');
+
+    // ---------- state ----------
+    let originalImage = null;        // ImageData (raw after upload)
+    let processedImageData = null;   // ImageData after contrast/sharpness/bg removal
+    let currentSize = 600;
+    let currentPins = 90;
+    let currentLines = 180;
+    let currentWidth = 2.4;
+    let currentContrast = 1.2;
+    let currentSharpness = 1.0;
+    let bgRemove = false;
+
+    // ---------- helpers ----------
+    function updateLabels() {
+      sizeLabel.textContent = sizeSlider.value;
+      pinsLabel.textContent = pinsSlider.value;
+      linesLabel.textContent = linesSlider.value;
+      widthLabel.textContent = parseFloat(widthSlider.value).toFixed(1);
+      contrastLabel.textContent = parseFloat(contrastSlider.value).toFixed(2);
+      sharpnessLabel.textContent = parseFloat(sharpnessSlider.value).toFixed(1);
+      currentSize = parseInt(sizeSlider.value, 10);
+      currentPins = parseInt(pinsSlider.value, 10);
+      currentLines = parseInt(linesSlider.value, 10);
+      currentWidth = parseFloat(widthSlider.value);
+      currentContrast = parseFloat(contrastSlider.value);
+      currentSharpness = parseFloat(sharpnessSlider.value);
+      bgRemove = bgRemoveCheck.checked;
+    }
+
+    // resize canvas (visual + drawing buffer)
+    function resizeCanvas(size) {
+      canvas.width = size;
+      canvas.height = size;
+      canvas.style.width = size + 'px';
+      canvas.style.height = size + 'px';
+      // redraw if we have processed image
+      if (processedImageData) {
+        renderStringArt();
+      } else if (originalImage) {
+        // if only original exists, reapply filters
+        applyFiltersAndRender();
+      } else {
+        drawPlaceholder();
+      }
+    }
+
+    // draw placeholder / empty state
+    function drawPlaceholder() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#0d0d18';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#5f5f8a';
+      ctx.font = '18px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🖼️ Upload image', canvas.width/2, canvas.height/2 - 20);
+      ctx.font = '14px system-ui, sans-serif';
+      ctx.fillStyle = '#7a7aa0';
+      ctx.fillText('then adjust & render', canvas.width/2, canvas.height/2 + 26);
+    }
+
+    // ---------- image processing (contrast, sharpness, bg removal) ----------
+    function processImageData(imageData, contrast, sharpness, removeBg) {
+      const data = imageData.data;
+      const w = imageData.width, h = imageData.height;
+      const output = new ImageData(new Uint8ClampedArray(data), w, h);
+      const outData = output.data;
+
+      // contrast
+      const factor = (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
+      const bias = 128 * (1 - factor);
+
+      // sharpness: simple 3x3 kernel (unsharp mask approximation)
+      // we'll apply sharpness after contrast (but before bg removal)
+      // we need a temporary buffer for sharpness
+      let tempData = null;
+      if (sharpness !== 1.0) {
+        const temp = new ImageData(new Uint8ClampedArray(data), w, h);
+        const tData = temp.data;
+        // copy original
+        for (let i = 0; i < data.length; i++) tData[i] = data[i];
+        // apply sharpness kernel (simple)
+        const kernel = [
+          [0, -1, 0],
+          [-1, 5, -1],
+          [0, -1, 0]
+        ];
+        const kSum = 1; 
+        for (let y = 1; y < h-1; y++) {
+          for (let x = 1; x < w-1; x++) {
+            const idx = (y * w + x) * 4;
+            let r = 0, g = 0, b = 0;
+            for (let ky = -1; ky <= 1; ky++) {
+              for (let kx = -1; kx <= 1; kx++) {
+                const px = x + kx, py = y + ky;
+                const pIdx = (py * w + px) * 4;
+                const kVal = kernel[ky+1][kx+1];
+                r += tData[pIdx] * kVal;
+                g += tData[pIdx+1] * kVal;
+                b += tData[pIdx+2] * kVal;
+              }
+            }
+            const sharpFactor = 0.2 + 0.8 * sharpness; 
+            outData[idx] = Math.min(255, Math.max(0, tData[idx] * (1 - sharpFactor) + r * sharpFactor));
+            outData[idx+1] = Math.min(255, Math.max(0, tData[idx+1] * (1 - sharpFactor) + g * sharpFactor));
+            outData[idx+2] = Math.min(255, Math.max(0, tData[idx+2] * (1 - sharpFactor) + b * sharpFactor));
+            outData[idx+3] = tData[idx+3];
+          }
+        }
+        // copy edges
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            if (y === 0 || y === h-1 || x === 0 || x === w-1) {
+              const idx = (y * w + x) * 4;
+              outData[idx] = tData[idx];
+              outData[idx+1] = tData[idx+1];
+              outData[idx+2] = tData[idx+2];
+              outData[idx+3] = tData[idx+3];
+            }
+          }
+        }
+        // now apply contrast on outData (sharpened)
+        for (let i = 0; i < outData.length; i+=4) {
+          outData[i] = Math.min(255, Math.max(0, factor * outData[i] + bias));
+          outData[i+1] = Math.min(255, Math.max(0, factor * outData[i+1] + bias));
+          outData[i+2] = Math.min(255, Math.max(0, factor * outData[i+2] + bias));
+        }
+      } else {
+        // no sharpness, just contrast
+        for (let i = 0; i < outData.length; i+=4) {
+          outData[i] = Math.min(255, Math.max(0, factor * outData[i] + bias));
+          outData[i+1] = Math.min(255, Math.max(0, factor * outData[i+1] + bias));
+          outData[i+2] = Math.min(255, Math.max(0, factor * outData[i+2] + bias));
+        }
+      }
+
+      // background removal (white → alpha 0)
+      if (removeBg) {
+        for (let i = 0; i < outData.length; i+=4) {
+          const r = outData[i], g = outData[i+1], b = outData[i+2];
+          // if pixel is light (near white) set alpha to 0
+          if (r > 200 && g > 200 && b > 200) {
+            outData[i+3] = 0;
+          } else {
+            outData[i+3] = 255;
+          }
+        }
+      }
+
+      return output;
+    }
+
+    // apply filters and store processed image, then render
+    function applyFiltersAndRender() {
+      if (!originalImage) {
+        infoText.textContent = '⚠️ Please upload an image first.';
+        return;
+      }
+      const processed = processImageData(originalImage, currentContrast, currentSharpness, bgRemove);
+      processedImageData = processed;
+      renderStringArt();
+      infoText.textContent = '✅ Filters applied · render updated.';
+    }
+
+    // ---------- string art render (core) ----------
+    function renderStringArt() {
+      if (!processedImageData) {
+        // if no processed image, try to render from original (if any)
+        if (originalImage) {
+          processedImageData = originalImage; // fallback
+        } else {
+          drawPlaceholder();
+          return;
+        }
+      }
+
+      const size = canvas.width;
+      const half = size / 2;
+      const radius = half * 0.88; 
+      const pins = currentPins;
+      const lines = currentLines;
+      const lineWidth = currentWidth;
+
+      // get image data from processed
+      const imgData = processedImageData;
+      const data = imgData.data;
+      const w = imgData.width, h = imgData.height;
+
+      // clear canvas (dark background)
+      ctx.clearRect(0, 0, size, size);
+      ctx.fillStyle = '#0d0d18';
+      ctx.fillRect(0, 0, size, size);
+
+      // precompute pin positions (on circle)
+      const pinPositions = [];
+      for (let i = 0; i < pins; i++) {
+        const angle = (i / pins) * 2 * Math.PI - Math.PI/2;
+        const x = half + radius * Math.cos(angle);
+        const y = half + radius * Math.sin(angle);
+        pinPositions.push({x, y});
+      }
+
+      // random line generation (based on image luminosity)
+      // we sample the image at points along line between two pins
+      // brighter areas → more lines, darker → fewer
+      // we'll iterate 'lines' times: pick random pinA, then sample image to pick pinB
+      ctx.strokeStyle = '#f2e9c2';
+      ctx.lineWidth = lineWidth;
+      ctx.shadowColor = '#b8a87a';
+      ctx.shadowBlur = 2;
+
+      for (let l = 0; l < lines; l++) {
+        // pick random start pin
+        const idxA = Math.floor(Math.random() * pins);
+        const pA = pinPositions[idxA];
+        // pick end pin based on image: sample along line from pA to random candidate
+        const idxB = Math.floor(Math.random() * pins);
+        const pB = pinPositions[idxB];
+
+        // sample image intensity along the line (10 points)
+        let totalBrightness = 0;
+        const steps = 12;
+        for (let s = 0; s < steps; s++) {
+          const t = s / steps;
+          const px = Math.floor(pA.x + (pB.x - pA.x) * t);
+          const py = Math.floor(pA.y + (pB.y - pA.y) * t);
+          if (px >= 0 && px < w && py >= 0 && py < h) {
+            const idx = (py * w + px) * 4;
+            const r = data[idx] || 0;
+            const g = data[idx+1] || 0;
+            const b = data[idx+2] || 0;
+            const brightness = (r + g + b) / 3; // 0-255
+            totalBrightness += brightness;
+          }
+        }
+        const avgBright = totalBrightness / steps;
+        // map brightness to probability: darker image → more lines (invert)
+        const prob = Math.min(1, Math.max(0.05, (255 - avgBright) / 200));
+        if (Math.random() < prob) {
+          ctx.beginPath();
+          ctx.moveTo(pA.x, pA.y);
+          ctx.lineTo(pB.x, pB.y);
+          ctx.stroke();
+        }
+      }
+
+      // draw pin dots
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#e0d6b0';
+      for (let p of pinPositions) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, 2*Math.PI);
+        ctx.fill();
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = '#b8a87a';
+      }
+      ctx.shadowBlur = 0;
+      infoText.textContent = `✨ String art · ${pins} pins · ${lines} lines`;
+    }
+
+    // ---------- load image ----------
+    function loadImage(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // resize to current size
+          const size = parseInt(sizeSlider.value, 10);
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = size;
+          tempCanvas.height = size;
+          const tCtx = tempCanvas.getContext('2d');
+          tCtx.drawImage(img, 0, 0, size, size);
+          const imageData = tCtx.getImageData(0, 0, size, size);
+          originalImage = imageData;
+          // apply filters and render
+          applyFiltersAndRender();
+          infoText.textContent = `📸 Image loaded (${size}×${size})`;
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ---------- reset to default ----------
+    function resetAll() {
+      sizeSlider.value = '600';
+      pinsSlider.value = '90';
+      linesSlider.value = '180';
+      widthSlider.value = '2.4';
+      contrastSlider.value = '1.2';
+      sharpnessSlider.value = '1.0';
+      bgRemoveCheck.checked = false;
+      updateLabels();
+      originalImage = null;
+      processedImageData = null;
+      resizeCanvas(600);
+      drawPlaceholder();
+      infoText.textContent = '↺ Reset to defaults · upload an image.';
+      fileInput.value = '';
+    }
+
+    // ---------- event binding ----------
+    function init() {
+      // sliders update labels
+      [sizeSlider, pinsSlider, linesSlider, widthSlider, contrastSlider, sharpnessSlider].forEach(slider => {
+        slider.addEventListener('input', () => {
+          updateLabels();
+        });
+      });
+      bgRemoveCheck.addEventListener('change', () => {
+        bgRemove = bgRemoveCheck.checked;
+      });
+
+      // size slider → resize canvas
+      sizeSlider.addEventListener('change', () => {
+        const newSize = parseInt(sizeSlider.value, 10);
+        resizeCanvas(newSize);
+        if (originalImage) {
+          // re-process image to new size? we need to reload from original? 
+          // we keep originalImage as size-dependent. We'll reload from file if possible.
+          // simpler: resize original image by scaling
+          if (originalImage) {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = newSize;
+            tempCanvas.height = newSize;
+            const tCtx = tempCanvas.getContext('2d');
+            // put original image data into temp canvas
+            const tempImg = new ImageData(originalImage.data, originalImage.width, originalImage.height);
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = originalImage.width;
+            offCanvas.height = originalImage.height;
+            const offCtx = offCanvas.getContext('2d');
+            offCtx.putImageData(tempImg, 0, 0);
+            tCtx.drawImage(offCanvas, 0, 0, newSize, newSize);
+            const newImageData = tCtx.getImageData(0, 0, newSize, newSize);
+            originalImage = newImageData;
+            applyFiltersAndRender();
+          }
+        }
+      });
+
+      // render button
+      renderBtn.addEventListener('click', () => {
+        if (!originalImage) {
+          infoText.textContent = '⚠️ No image loaded. Upload first.';
+          return;
+        }
+        applyFiltersAndRender();
+      });
+
+      // apply filters
+      applyFiltersBtn.addEventListener('click', () => {
+        if (!originalImage) {
+          infoText.textContent = '⚠️ Upload an image first.';
+          return;
+        }
+        applyFiltersAndRender();
+      });
+
+      resetFiltersBtn.addEventListener('click', () => {
+        contrastSlider.value = '1.2';
+        sharpnessSlider.value = '1.0';
+        bgRemoveCheck.checked = false;
+        updateLabels();
+        if (originalImage) {
+          applyFiltersAndRender();
+        } else {
+          infoText.textContent = 'Filters reset. Upload image to see effect.';
+        }
+      });
+
+      // reset
+      resetBtn.addEventListener('click', resetAll);
+
+      // file upload
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          loadImage(e.target.files[0]);
+        }
+      });
+
+      // initial
+      updateLabels();
+      resizeCanvas(600);
+      drawPlaceholder();
+    }
+
+    init();
+  })();
+</script>
+</body>
+</html>

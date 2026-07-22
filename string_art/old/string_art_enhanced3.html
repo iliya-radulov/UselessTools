@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧵 String Art Pro · Real Size Export</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    body {
+      background: #12121f;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
+    }
+    .app {
+      max-width: 1400px;
+      width: 100%;
+      background: #1e1e32;
+      border-radius: 36px;
+      padding: 28px 32px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+      color: #ececf5;
+    }
+    h1 {
+      margin: 0 0 8px 0;
+      font-weight: 500;
+      font-size: 2.1rem;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #3d3d60;
+      padding-bottom: 18px;
+    }
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 30px;
+      margin-top: 20px;
+    }
+    @media (max-width: 880px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .canvas-wrapper {
+      background: #141425;
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: inset 0 0 0 1px #3a3a5a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #canvas-container {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      max-height: 720px;
+      background: #0a0a16;
+      border-radius: 18px;
+      overflow: hidden;
+      position: relative;
+    }
+    #canvas-container canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain;
+    }
+    .upload-row {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .upload-row label {
+      background: #333355;
+      padding: 10px 22px;
+      border-radius: 40px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #5a5a80;
+      flex: 1 1 auto;
+    }
+    .upload-row label:hover {
+      background: #44446a;
+    }
+    .upload-row input[type="file"] {
+      display: none;
+    }
+    .btn {
+      background: #6c5ce7;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 40px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: 0.15s;
+      border: 1px solid #8a7af0;
+      flex: 1 1 auto;
+      text-align: center;
+    }
+    .btn:hover {
+      background: #7d6ff0;
+      transform: scale(0.97);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #6c5ce7;
+      color: #cbc4ff;
+    }
+    .btn-outline:hover {
+      background: #2f2f50;
+    }
+    .btn-pdf {
+      background: #2d7a5a;
+      border-color: #3e9a74;
+    }
+    .btn-pdf:hover {
+      background: #3a8f6a;
+    }
+    .panel {
+      background: #1a1a30;
+      border-radius: 24px;
+      padding: 22px 20px;
+      box-shadow: inset 0 0 0 1px #3a3a5a;
+    }
+    .panel h3 {
+      margin: 0 0 18px 0;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      color: #b0b0d9;
+      border-bottom: 1px solid #333355;
+      padding-bottom: 12px;
+    }
+    .slider-group {
+      margin-bottom: 16px;
+    }
+    .slider-group label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: #cbc4ff;
+      margin-bottom: 4px;
+    }
+    .slider-group input[type="range"] {
+      width: 100%;
+      height: 6px;
+      background: #34345a;
+      border-radius: 10px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .slider-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #a29bfe;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 8px #6c5ce7;
+    }
+    .slider-group input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      background: #a29bfe;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 12px 0 8px;
+      flex-wrap: wrap;
+    }
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      color: #d0d0f0;
+    }
+    .info-badge {
+      background: #262648;
+      border-radius: 40px;
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      color: #b0b0dd;
+      margin-top: 12px;
+      text-align: center;
+      width: 100%;
+    }
+    .flex-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>🧵 String Art · Real Size Export</h1>
+  <div class="main-grid">
+    <!-- left: canvas -->
+    <div class="canvas-wrapper">
+      <div id="canvas-container">
+        <!-- preview canvas (screen size) -->
+        <canvas id="stringCanvas" width="900" height="900"></canvas>
+      </div>
+      <div class="upload-row">
+        <label for="imageUpload">📁 Upload Image</label>
+        <input type="file" id="imageUpload" accept="image/*">
+        <button class="btn" id="renderBtn">⚡ Render</button>
+        <button class="btn btn-outline" id="resetBtn">↺ Reset</button>
+      </div>
+      <div class="flex-row" style="width:100%;">
+        <button class="btn btn-pdf" id="pdfBtn" style="flex:2;">📄 Export PDF (Real Size)</button>
+        <button class="btn btn-outline" id="printBtn" style="flex:1;">🖨️ Print preview</button>
+      </div>
+      <div class="info-badge" id="infoText">
+        ⬆️ Upload image · adjust pins/lines · set diameter & DPI for print
+      </div>
+    </div>
+
+    <!-- right: controls -->
+    <div class="panel">
+      <h3>⚙️ Thread & Image</h3>
+
+      <!-- preview canvas size (screen only) -->
+      <div class="slider-group">
+        <label>🖥️ Preview canvas px <span id="sizeLabel">900</span></label>
+        <input type="range" id="sizeSlider" min="600" max="1200" value="900" step="60">
+      </div>
+
+      <div class="slider-group">
+        <label>📍 Pins (max 500) <span id="pinsLabel">180</span></label>
+        <input type="range" id="pinsSlider" min="60" max="500" value="180" step="6">
+      </div>
+      <div class="slider-group">
+        <label>✏️ Lines (density) <span id="linesLabel">1000</span></label>
+        <input type="range" id="linesSlider" min="200" max="8000" value="1000" step="100">
+      </div>
+      <div class="slider-group">
+        <label>🧵 Thread width px <span id="widthLabel">1.0</span></label>
+        <input type="range" id="widthSlider" min="0.5" max="2.0" value="1.0" step="0.1">
+      </div>
+
+      <hr>
+
+      <div class="slider-group">
+        <label>🔆 Contrast <span id="contrastLabel">1.2</span></label>
+        <input type="range" id="contrastSlider" min="0.5" max="2.0" value="1.2" step="0.05">
+      </div>
+      <div class="slider-group">
+        <label>🔎 Sharpness <span id="sharpnessLabel">1.0</span></label>
+        <input type="range" id="sharpnessSlider" min="0.5" max="1.5" value="1.0" step="0.1">
+      </div>
+
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="bgRemoveCheck"> 🧽 Remove background (white)</label>
+        <label><input type="checkbox" id="showPinNumbers" checked> 🔢 Show pin numbers</label>
+      </div>
+
+      <hr>
+
+      <!-- physical parameters for print -->
+      <div class="slider-group">
+        <label>📐 Diameter (cm) <span id="diameterLabel">30</span></label>
+        <input type="range" id="diameterSlider" min="20" max="40" value="30" step="1">
+      </div>
+      <div class="slider-group">
+        <label>🖨️ DPI (print) <span id="dpiLabel">300</span></label>
+        <input type="range" id="dpiSlider" min="150" max="300" value="300" step="50">
+      </div>
+      <div class="slider-group">
+        <label>📏 Export pixels (approx) <span id="exportPxLabel">3543</span></label>
+        <!-- display only; computed in JS -->
+      </div>
+
+      <div class="flex-row">
+        <button class="btn" id="applyFiltersBtn" style="flex:2;">✨ Apply filters</button>
+        <button class="btn btn-outline" id="resetFiltersBtn" style="flex:1;">↺ Filters</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+        integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+  (function() {
+    // ---------- DOM refs ----------
+    const canvas = document.getElementById('stringCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const sizeSlider = document.getElementById('sizeSlider');
+    const sizeLabel = document.getElementById('sizeLabel');
+    const pinsSlider = document.getElementById('pinsSlider');
+    const pinsLabel = document.getElementById('pinsLabel');
+    const linesSlider = document.getElementById('linesSlider');
+    const linesLabel = document.getElementById('linesLabel');
+    const widthSlider = document.getElementById('widthSlider');
+    const widthLabel = document.getElementById('widthLabel');
+    const contrastSlider = document.getElementById('contrastSlider');
+    const contrastLabel = document.getElementById('contrastLabel');
+    const sharpnessSlider = document.getElementById('sharpnessSlider');
+    const sharpnessLabel = document.getElementById('sharpnessLabel');
+    const bgRemoveCheck = document.getElementById('bgRemoveCheck');
+    const showPinNumbers = document.getElementById('showPinNumbers');
+    const fileInput = document.getElementById('imageUpload');
+    const renderBtn = document.getElementById('renderBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+    const pdfBtn = document.getElementById('pdfBtn');
+    const printBtn = document.getElementById('printBtn');
+    const infoText = document.getElementById('infoText');
+
+    const diameterSlider = document.getElementById('diameterSlider');
+    const diameterLabel = document.getElementById('diameterLabel');
+    const dpiSlider = document.getElementById('dpiSlider');
+    const dpiLabel = document.getElementById('dpiLabel');
+    const exportPxLabel = document.getElementById('exportPxLabel');
+
+    // ---------- state ----------
+    let originalImage = null;        // ImageData
+    let processedImageData = null;   // ImageData after filters
+
+    // preview parameters
+    let currentSize = 900;
+    let currentPins = 180;
+    let currentLines = 1000;
+    let currentWidth = 1.0;
+    let currentContrast = 1.2;
+    let currentSharpness = 1.0;
+    let bgRemove = false;
+    let showNumbers = true;
+
+    // physical export parameters
+    let currentDiameterCm = 30;
+    let currentDpi = 300;
+
+    // ---------- helpers ----------
+    function updateLabels() {
+      sizeLabel.textContent = sizeSlider.value;
+      pinsLabel.textContent = pinsSlider.value;
+      linesLabel.textContent = linesSlider.value;
+      widthLabel.textContent = parseFloat(widthSlider.value).toFixed(1);
+      contrastLabel.textContent = parseFloat(contrastSlider.value).toFixed(2);
+      sharpnessLabel.textContent = parseFloat(sharpnessSlider.value).toFixed(1);
+
+      currentSize = parseInt(sizeSlider.value, 10);
+      currentPins = parseInt(pinsSlider.value, 10);
+      currentLines = parseInt(linesSlider.value, 10);
+      currentWidth = parseFloat(widthSlider.value);
+      currentContrast = parseFloat(contrastSlider.value);
+      currentSharpness = parseFloat(sharpnessSlider.value);
+      bgRemove = bgRemoveCheck.checked;
+      showNumbers = showPinNumbers.checked;
+
+      updatePhysicalLabels(false);
+    }
+
+    function updatePhysicalLabels(fromSliders = true) {
+      if (fromSliders) {
+        currentDiameterCm = parseFloat(diameterSlider.value);
+        currentDpi = parseInt(dpiSlider.value, 10);
+      }
+      diameterLabel.textContent = currentDiameterCm.toFixed(0);
+      dpiLabel.textContent = currentDpi.toString();
+
+      const px = getExportSizePx();
+      exportPxLabel.textContent = px.toString();
+    }
+
+    // cm → px conversion using DPI
+    // px = cm / 2.54 * DPI
+    function getExportSizePx() {
+      const px = currentDiameterCm / 2.54 * currentDpi;
+      return Math.round(px);
+    }
+
+    function resizePreviewCanvas(size) {
+      canvas.width = size;
+      canvas.height = size;
+      if (processedImageData) {
+        syncImageToCanvas(canvas, processedImageData, (newData) => processedImageData = newData);
+        renderStringArt();
+      } else if (originalImage) {
+        syncImageToCanvas(canvas, originalImage, (newData) => originalImage = newData);
+        applyFiltersAndRender();
+      } else {
+        drawPlaceholder();
+      }
+    }
+
+    function drawPlaceholder() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#0a0a16';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#5f5f8a';
+      ctx.font = '22px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🖼️ Upload image', canvas.width/2, canvas.height/2 - 24);
+      ctx.font = '16px system-ui, sans-serif';
+      ctx.fillStyle = '#7a7aa0';
+      ctx.fillText('Adjust pins/lines · set diameter & DPI', canvas.width/2, canvas.height/2 + 30);
+    }
+
+    // ---------- image size sync ----------
+    function syncImageToCanvas(targetCanvas, imgData, setter) {
+      if (!imgData) return;
+      if (imgData.width === targetCanvas.width && imgData.height === targetCanvas.height) return;
+
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = targetCanvas.width;
+      tempCanvas.height = targetCanvas.height;
+      const tCtx = tempCanvas.getContext('2d');
+
+      const offCanvas = document.createElement('canvas');
+      offCanvas.width = imgData.width;
+      offCanvas.height = imgData.height;
+      const offCtx = offCanvas.getContext('2d');
+      offCtx.putImageData(imgData, 0, 0);
+
+      tCtx.drawImage(offCanvas, 0, 0, targetCanvas.width, targetCanvas.height);
+      setter(tCtx.getImageData(0, 0, targetCanvas.width, targetCanvas.height));
+    }
+
+    // ---------- image processing ----------
+    function processImageData(imageData, contrast, sharpness, removeBg) {
+      const w = imageData.width;
+      const h = imageData.height;
+      const input = imageData.data;
+      const out = new Uint8ClampedArray(input.length);
+
+      // grayscale
+      for (let i = 0; i < input.length; i += 4) {
+        const r = input[i];
+        const g = input[i + 1];
+        const b = input[i + 2];
+        const y = (r + g + b) / 3;
+        out[i] = y;
+        out[i + 1] = y;
+        out[i + 2] = y;
+        out[i + 3] = input[i + 3];
+      }
+
+      // contrast
+      const mid = 128;
+      for (let i = 0; i < out.length; i += 4) {
+        out[i]   = clamp8(mid + (out[i]   - mid) * contrast);
+        out[i+1] = clamp8(mid + (out[i+1] - mid) * contrast);
+        out[i+2] = clamp8(mid + (out[i+2] - mid) * contrast);
+      }
+
+      // mild sharpen (optional)
+      if (sharpness !== 1.0) {
+        const kernel = [[0, -1, 0], [-1, 5, -1], [0, -1, 0]];
+        const temp = out.slice();
+        const factor = 0.3 * (sharpness - 1.0);
+
+        for (let y = 1; y < h - 1; y++) {
+          for (let x = 1; x < w - 1; x++) {
+            const idx = (y * w + x) * 4;
+            let acc = 0;
+
+            for (let ky = -1; ky <= 1; ky++) {
+              for (let kx = -1; kx <= 1; kx++) {
+                const px = x + kx;
+                const py = y + ky;
+                const pIdx = (py * w + px) * 4;
+                const kVal = kernel[ky + 1][kx + 1];
+                acc += temp[pIdx] * kVal;
+              }
+            }
+
+            const base = temp[idx];
+            const val = base + factor * (acc - base);
+            const v = clamp8(val);
+            out[idx]   = v;
+            out[idx+1] = v;
+            out[idx+2] = v;
+          }
+        }
+      }
+
+      // background removal
+      if (removeBg) {
+        for (let i = 0; i < out.length; i += 4) {
+          const y = out[i];
+          out[i+3] = (y > 230) ? 0 : 255;
+        }
+      }
+
+      return new ImageData(out, w, h);
+    }
+
+    function clamp8(v) {
+      return v < 0 ? 0 : v > 255 ? 255 : v;
+    }
+
+    function applyFiltersAndRender() {
+      if (!originalImage) {
+        infoText.textContent = '⚠️ Please upload an image first.';
+        return;
+      }
+
+      // align original to preview canvas
+      syncImageToCanvas(canvas, originalImage, (newData) => originalImage = newData);
+      processedImageData = processImageData(originalImage, currentContrast, currentSharpness, bgRemove);
+      syncImageToCanvas(canvas, processedImageData, (newData) => processedImageData = newData);
+      renderStringArt();
+      infoText.textContent = '✅ Filters applied · preview updated.';
+    }
+
+    // brightness lookup
+    function getBrightnessAtCanvasPos(x, y, imgData, targetCanvas) {
+      const w = imgData.width;
+      const h = imgData.height;
+      const ix = Math.floor(x * w / targetCanvas.width);
+      const iy = Math.floor(y * h / targetCanvas.height);
+      if (ix < 0 || ix >= w || iy < 0 || iy >= h) return 1.0;
+      const idx = (iy * w + ix) * 4;
+      const r = imgData.data[idx];
+      const g = imgData.data[idx + 1];
+      const b = imgData.data[idx + 2];
+      return (r + g + b) / (3 * 255);
+    }
+
+    // ---------- string art render (preview, biased to dark) ----------
+    function renderStringArt(targetCanvas = canvas, imgDataOverride = null) {
+      const ctxLocal = targetCanvas.getContext('2d');
+
+      const imgData = imgDataOverride || processedImageData;
+      if (!imgData) {
+        if (originalImage) {
+          processedImageData = processImageData(originalImage, currentContrast, currentSharpness, bgRemove);
+        } else {
+          drawPlaceholder();
+          return;
+        }
+      }
+
+      // ensure image matches target canvas size
+      syncImageToCanvas(targetCanvas, imgDataOverride || processedImageData, (newData) => {
+        if (imgDataOverride) {
+          processedImageData = newData;
+        } else {
+          processedImageData = newData;
+        }
+      });
+
+      const size = targetCanvas.width;
+      const half = size / 2;
+      const radius = half * 0.88;
+      const pins = currentPins;
+      const lines = currentLines;
+      const lineWidth = currentWidth;
+
+      ctxLocal.clearRect(0, 0, size, size);
+      ctxLocal.fillStyle = '#0a0a16';
+      ctxLocal.fillRect(0, 0, size, size);
+
+      const pinPositions = [];
+      for (let i = 0; i < pins; i++) {
+        const angle = (i / pins) * 2 * Math.PI - Math.PI / 2;
+        const x = half + radius * Math.cos(angle);
+        const y = half + radius * Math.sin(angle);
+        pinPositions.push({ x, y });
+      }
+
+      ctxLocal.strokeStyle = '#f2e9c2';
+      ctxLocal.lineWidth = lineWidth;
+      ctxLocal.shadowColor = '#b8a87a';
+      ctxLocal.shadowBlur = 1.5;
+
+      const candidatesPerStep = 18;
+      const samplesAlongLine = 24;
+
+      let currentPinIndex = 0;
+      for (let l = 0; l < lines; l++) {
+        let bestIdx = null;
+        let bestScore = Infinity;
+
+        for (let c = 0; c < candidatesPerStep; c++) {
+          const idxB = Math.floor(Math.random() * pins);
+          if (idxB === currentPinIndex) continue;
+
+          const pA = pinPositions[currentPinIndex];
+          const pB = pinPositions[idxB];
+
+          let sumBrightness = 0;
+          for (let s = 0; s < samplesAlongLine; s++) {
+            const t = s / (samplesAlongLine - 1);
+            const x = pA.x + (pB.x - pA.x) * t;
+            const y = pA.y + (pB.y - pA.y) * t;
+            sumBrightness += getBrightnessAtCanvasPos(x, y, processedImageData, targetCanvas);
+          }
+          const avgBright = sumBrightness / samplesAlongLine;
+
+          if (avgBright < bestScore) {
+            bestScore = avgBright;
+            bestIdx = idxB;
+          }
+        }
+
+        if (bestIdx === null) {
+          currentPinIndex = (currentPinIndex + 1) % pins;
+          continue;
+        }
+
+        const pA = pinPositions[currentPinIndex];
+        const pB = pinPositions[bestIdx];
+
+        ctxLocal.beginPath();
+        ctxLocal.moveTo(pA.x, pA.y);
+        ctxLocal.lineTo(pB.x, pB.y);
+        ctxLocal.stroke();
+
+        currentPinIndex = bestIdx;
+      }
+
+      ctxLocal.shadowBlur = 0;
+      ctxLocal.fillStyle = '#e0d6b0';
+      ctxLocal.font = `${Math.max(10, size / 50)}px system-ui, sans-serif`;
+      ctxLocal.textAlign = 'center';
+      ctxLocal.textBaseline = 'middle';
+
+      for (let i = 0; i < pinPositions.length; i++) {
+        const p = pinPositions[i];
+        ctxLocal.beginPath();
+        ctxLocal.arc(p.x, p.y, Math.max(3, size / 180), 0, 2 * Math.PI);
+        ctxLocal.fill();
+        if (showNumbers) {
+          ctxLocal.fillStyle = '#b8a87a';
+          ctxLocal.fillText(i + 1, p.x, p.y - Math.max(10, size / 25));
+          ctxLocal.fillStyle = '#e0d6b0';
+        }
+      }
+
+      if (targetCanvas === canvas) {
+        infoText.textContent =
+          `✨ Preview · ${pins} pins · ${lines} lines · ${size}×${size}px`
+          + ` · Diameter ${currentDiameterCm} cm @ ${currentDpi} DPI (≈ ${getExportSizePx()} px)`;
+      }
+    }
+
+    // ---------- load image ----------
+    function loadImage(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const size = currentSize;
+          canvas.width = size;
+          canvas.height = size;
+
+          const tCtx = canvas.getContext('2d');
+          tCtx.clearRect(0, 0, size, size);
+          tCtx.drawImage(img, 0, 0, size, size);
+          originalImage = tCtx.getImageData(0, 0, size, size);
+
+          applyFiltersAndRender();
+          infoText.textContent = `📸 Image loaded (${size}×${size}px preview)`;
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ---------- reset ----------
+    function resetAll() {
+      sizeSlider.value = '900';
+      pinsSlider.value = '180';
+      linesSlider.value = '1000';
+      widthSlider.value = '1.0';
+      contrastSlider.value = '1.2';
+      sharpnessSlider.value = '1.0';
+      bgRemoveCheck.checked = false;
+      showPinNumbers.checked = true;
+
+      diameterSlider.value = '30';
+      dpiSlider.value = '300';
+
+      updateLabels();
+      updatePhysicalLabels(true);
+
+      originalImage = null;
+      processedImageData = null;
+      canvas.width = currentSize;
+      canvas.height = currentSize;
+      drawPlaceholder();
+      infoText.textContent = '↺ Reset to defaults · upload an image.';
+      fileInput.value = '';
+    }
+
+    // ---------- PDF export (real size) ----------
+    function exportPDF() {
+      if (!processedImageData && !originalImage) {
+        infoText.textContent = '⚠️ No image/art to export. Render first.';
+        return;
+      }
+
+      const exportSize = getExportSizePx(); // based on diameter + DPI
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = exportSize;
+      exportCanvas.height = exportSize;
+
+      // start from original image, rescaled to export size
+      if (!originalImage) {
+        infoText.textContent = '⚠️ No original image data. Export from preview only.';
+        exportCanvas.getContext('2d').drawImage(canvas, 0, 0, exportSize, exportSize);
+      } else {
+        syncImageToCanvas(exportCanvas, originalImage, (newData) => {
+          const imgForExport = processImageData(newData, currentContrast, currentSharpness, bgRemove);
+          renderStringArt(exportCanvas, imgForExport);
+        });
+      }
+
+      const wrapper = document.createElement('div');
+      wrapper.style.width = exportSize + 'px';
+      wrapper.style.height = exportSize + 'px';
+      wrapper.style.background = '#0a0a16';
+      wrapper.style.display = 'flex';
+      wrapper.style.alignItems = 'center';
+      wrapper.style.justifyContent = 'center';
+      wrapper.style.padding = '20px';
+
+      const img = document.createElement('img');
+      img.src = exportCanvas.toDataURL('image/png');
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'contain';
+      wrapper.appendChild(img);
+
+      const opt = {
+        margin:       0.4,
+        filename:     `string-art-${currentDiameterCm}cm-${currentDpi}dpi.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 1, useCORS: true, letterRendering: true },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(wrapper).save().then(() => {
+        infoText.textContent =
+          `📄 PDF exported (${currentDiameterCm} cm diameter @ ${currentDpi} DPI, ~${exportSize}×${exportSize}px)`;
+      }).catch(err => {
+        infoText.textContent = '❌ PDF export error: ' + err.message;
+      });
+    }
+
+    // ---------- print ----------
+    function printArt() {
+      if (!processedImageData && !originalImage) {
+        infoText.textContent = '⚠️ No art to print.';
+        return;
+      }
+      const dataUrl = canvas.toDataURL('image/png');
+      const win = window.open('', '_blank');
+      if (!win) {
+        infoText.textContent = '⚠️ Popup blocked. Please allow popups for print.';
+        return;
+      }
+      win.document.write(`
+        <html><head><title>String Art Print Preview</title>
+        <style>
+          body { margin:0; display:flex; justify-content:center; align-items:center;
+                 height:100vh; background:#0a0a16; }
+          img { max-width:100%; max-height:100%; object-fit:contain; }
+        </style>
+        </head><body><img src="${dataUrl}" onload="window.print();"></body></html>
+      `);
+      win.document.close();
+    }
+
+    // ---------- event binding ----------
+    function init() {
+      [sizeSlider, pinsSlider, linesSlider, widthSlider,
+       contrastSlider, sharpnessSlider].forEach(slider => {
+        slider.addEventListener('input', updateLabels);
+      });
+      bgRemoveCheck.addEventListener('change', () => { bgRemove = bgRemoveCheck.checked; });
+      showPinNumbers.addEventListener('change', () => {
+        showNumbers = showPinNumbers.checked;
+        if (processedImageData) renderStringArt();
+      });
+
+      diameterSlider.addEventListener('input', () => {
+        updatePhysicalLabels(true);
+      });
+      dpiSlider.addEventListener('input', () => {
+        updatePhysicalLabels(true);
+      });
+
+      sizeSlider.addEventListener('change', () => {
+        const newSize = parseInt(sizeSlider.value, 10);
+        resizePreviewCanvas(newSize);
+      });
+
+      renderBtn.addEventListener('click', () => {
+        if (!originalImage) { infoText.textContent = '⚠️ No image loaded.'; return; }
+        applyFiltersAndRender();
+      });
+
+      applyFiltersBtn.addEventListener('click', () => {
+        if (!originalImage) { infoText.textContent = '⚠️ Upload an image first.'; return; }
+        applyFiltersAndRender();
+      });
+
+      resetFiltersBtn.addEventListener('click', () => {
+        contrastSlider.value = '1.2';
+        sharpnessSlider.value = '1.0';
+        bgRemoveCheck.checked = false;
+        updateLabels();
+        if (originalImage) applyFiltersAndRender();
+        else infoText.textContent = 'Filters reset. Upload image.';
+      });
+
+      resetBtn.addEventListener('click', resetAll);
+      pdfBtn.addEventListener('click', exportPDF);
+      printBtn.addEventListener('click', printArt);
+
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) loadImage(e.target.files[0]);
+      });
+
+      updateLabels();
+      updatePhysicalLabels(true);
+      canvas.width = currentSize;
+      canvas.height = currentSize;
+      drawPlaceholder();
+    }
+
+    init();
+  })();
+</script>
+</body>
+</html>

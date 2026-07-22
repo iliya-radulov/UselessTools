@@ -1,0 +1,30 @@
+# languages.py - Language configuration
+# Add this as a separate file
+
+LANGUAGES = {
+    'English': {'code': 'en', 'nltk_stopwords': 'english', 'flag': '🇬🇧'},
+    'Bulgarian': {'code': 'bg', 'nltk_stopwords': 'bulgarian', 'flag': '🇧🇬'},
+    'Spanish': {'code': 'es', 'nltk_stopwords': 'spanish', 'flag': '🇪🇸'},
+    'French': {'code': 'fr', 'nltk_stopwords': 'french', 'flag': '🇫🇷'},
+    'German': {'code': 'de', 'nltk_stopwords': 'german', 'flag': '🇩🇪'},
+    'Italian': {'code': 'it', 'nltk_stopwords': 'italian', 'flag': '🇮🇹'},
+    'Portuguese': {'code': 'pt', 'nltk_stopwords': 'portuguese', 'flag': '🇵🇹'},
+    'Dutch': {'code': 'nl', 'nltk_stopwords': 'dutch', 'flag': '🇳🇱'},
+    'Russian': {'code': 'ru', 'nltk_stopwords': 'russian', 'flag': '🇷🇺'},
+    'Arabic': {'code': 'ar', 'nltk_stopwords': 'arabic', 'flag': '🇸🇦'},
+    'Turkish': {'code': 'tr', 'nltk_stopwords': 'turkish', 'flag': '🇹🇷'},
+    'Greek': {'code': 'el', 'nltk_stopwords': 'greek', 'flag': '🇬🇷'},
+    'Swedish': {'code': 'sv', 'nltk_stopwords': 'swedish', 'flag': '🇸🇪'},
+    'Norwegian': {'code': 'no', 'nltk_stopwords': 'norwegian', 'flag': '🇳🇴'},
+    'Danish': {'code': 'da', 'nltk_stopwords': 'danish', 'flag': '🇩🇰'},
+    'Finnish': {'code': 'fi', 'nltk_stopwords': 'finnish', 'flag': '🇫🇮'},
+    'Hungarian': {'code': 'hu', 'nltk_stopwords': 'hungarian', 'flag': '🇭🇺'},
+    'Polish': {'code': 'pl', 'nltk_stopwords': 'polish', 'flag': '🇵🇱'},
+    'Czech': {'code': 'cs', 'nltk_stopwords': 'czech', 'flag': '🇨🇿'},
+    'Romanian': {'code': 'ro', 'nltk_stopwords': 'romanian', 'flag': '🇷🇴'},
+    'Slovak': {'code': 'sk', 'nltk_stopwords': 'slovak', 'flag': '🇸🇰'},
+    'Slovenian': {'code': 'sl', 'nltk_stopwords': 'slovenian', 'flag': '🇸🇮'},
+    'Estonian': {'code': 'et', 'nltk_stopwords': 'estonian', 'flag': '🇪🇪'},
+    'Latvian': {'code': 'lv', 'nltk_stopwords': 'latvian', 'flag': '🇱🇻'},
+    'Lithuanian': {'code': 'lt', 'nltk_stopwords': 'lithuanian', 'flag': '🇱🇹'},
+}

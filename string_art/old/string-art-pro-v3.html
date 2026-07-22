@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧵 String Art Generator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: #12121f;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .app {
+            max-width: 1400px;
+            width: 100%;
+            background: #1e1e32;
+            border-radius: 36px;
+            padding: 28px 32px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+            color: #ececf5;
+        }
+        h1 {
+            margin: 0 0 8px 0;
+            font-weight: 500;
+            font-size: 2.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #3d3d60;
+            padding-bottom: 18px;
+        }
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        @media (max-width: 880px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .canvas-wrapper {
+            background: #141425;
+            border-radius: 24px;
+            padding: 18px;
+            box-shadow: inset 0 0 0 1px #3a3a5a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #canvas-container {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            max-height: 720px;
+            background: #0a0a16;
+            border-radius: 18px;
+            overflow: hidden;
+            position: relative;
+        }
+        #canvas-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain;
+        }
+        .upload-row {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+        .upload-row label {
+            background: #333355;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #5a5a80;
+            flex: 1 1 auto;
+        }
+        .upload-row label:hover {
+            background: #44446a;
+        }
+        .upload-row input[type="file"] {
+            display: none;
+        }
+        .btn {
+            background: #6c5ce7;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: 0.15s;
+            border: 1px solid #8a7af0;
+            flex: 1 1 auto;
+            text-align: center;
+        }
+        .btn:hover {
+            background: #7d6ff0;
+            transform: scale(0.97);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #6c5ce7;
+            color: #cbc4ff;
+        }
+        .btn-outline:hover {
+            background: #2f2f50;
+        }
+        .btn-pdf {
+            background: #2d7a5a;
+            border-color: #3e9a74;
+        }
+        .btn-pdf:hover {
+            background: #3a8f6a;
+        }
+        .panel {
+            background: #1a1a30;
+            border-radius: 24px;
+            padding: 22px 20px;
+            box-shadow: inset 0 0 0 1px #3a3a5a;
+        }
+        .panel h3 {
+            margin: 0 0 18px 0;
+            font-weight: 400;
+            color: #b0b0d9;
+            border-bottom: 1px solid #333355;
+            padding-bottom: 12px;
+        }
+        .slider-group {
+            margin-bottom: 16px;
+        }
+        .slider-group label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #cbc4ff;
+            margin-bottom: 4px;
+        }
+        .slider-group input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #34345a;
+            border-radius: 10px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .slider-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #a29bfe;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 8px #6c5ce7;
+        }
+        .slider-group input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #a29bfe;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 12px 0 8px;
+            flex-wrap: wrap;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            color: #d0d0f0;
+        }
+        .info-badge {
+            background: #262648;
+            border-radius: 40px;
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            color: #b0b0dd;
+            margin-top: 12px;
+            text-align: center;
+            width: 100%;
+        }
+        .flex-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #2a2a4a;
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar.active {
+            display: block;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #a29bfe;
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .status-text {
+            font-size: 0.8rem;
+            color: #b0b0dd;
+            margin-top: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <h1>🧵 String Art Generator</h1>
+    <div class="main-grid">
+        <div class="canvas-wrapper">
+            <div id="canvas-container">
+                <canvas id="stringCanvas" width="800" height="800"></canvas>
+            </div>
+            <div class="upload-row">
+                <label for="imageUpload">📁 Upload Image</label>
+                <input type="file" id="imageUpload" accept="image/*">
+                <button class="btn" id="generateBtn">⚡ Generate</button>
+                <button class="btn btn-outline" id="resetBtn">↺ Reset</button>
+            </div>
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="status-text" id="statusText">Ready</div>
+            <div class="info-badge" id="infoText">⬆️ Upload image · adjust parameters →</div>
+        </div>
+
+        <div class="panel">
+            <h3>⚙️ Parameters</h3>
+            <div class="slider-group">
+                <label>📍 Nails <span id="nailsLabel">100</span></label>
+                <input type="range" id="nailsSlider" min="30" max="300" value="100" step="5">
+            </div>
+            <div class="slider-group">
+                <label>✏️ Iterations <span id="iterationsLabel">1000</span></label>
+                <input type="range" id="iterationsSlider" min="200" max="5000" value="1000" step="100">
+            </div>
+            <div class="slider-group">
+                <label>⚖️ Weight <span id="weightLabel">20</span></label>
+                <input type="range" id="weightSlider" min="5" max="50" value="20" step="1">
+            </div>
+            <div class="slider-group">
+                <label>🧵 Thread width <span id="widthLabel">1.5</span></label>
+                <input type="range" id="widthSlider" min="0.5" max="3" value="1.5" step="0.1">
+            </div>
+
+            <hr>
+
+            <div class="slider-group">
+                <label>🔆 Contrast <span id="contrastLabel">1.2</span></label>
+                <input type="range" id="contrastSlider" min="0.5" max="2.5" value="1.2" step="0.05">
+            </div>
+
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="invertCheck"> 🔄 Invert image</label>
+                <label><input type="checkbox" id="showNails" checked> 🔢 Show nails</label>
+            </div>
+
+            <div class="flex-row">
+                <button class="btn" id="applyFiltersBtn" style="flex:2;">✨ Apply filters</button>
+                <button class="btn btn-outline" id="resetFiltersBtn" style="flex:1;">↺</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
+
+<script>
+    class StringArtGenerator {
+        constructor() {
+            this.iterations = 1000;
+            this.image = null;
+            this.data = null;
+            this.residual = null;
+            this.seed = 0;
+            this.nails = 100;
+            this.weight = 20;
+            this.nodes = [];
+            this.paths = [];
+            this.pattern = [];
+            this.originalData = null;
+            this.canvasWidth = 800;
+            this.canvasHeight = 800;
+        }
+
+        setNodesCircle(width, height) {
+            const radius = Math.min(width, height) * 0.42;
+            const cx = width / 2;
+            const cy = height / 2;
+            const spacing = (2 * Math.PI) / this.nails;
+
+            this.nodes = [];
+            for (let i = 0; i < this.nails; i++) {
+                const angle = i * spacing - Math.PI / 2;
+                const x = cx + radius * Math.cos(angle);
+                const y = cy + radius * Math.sin(angle);
+                this.nodes.push([x, y]);
+            }
+        }
+
+        loadImageData(imageData) {
+            this.data = imageData;
+            this.originalData = new Float32Array(imageData);
+            this.canvasWidth = imageData.width;
+            this.canvasHeight = imageData.height;
+            this.setNodesCircle(this.canvasWidth, this.canvasHeight);
+            this.precomputePaths();
+        }
+
+        preprocess(imageData, contrast, invert) {
+            const data = new Float32Array(imageData);
+            const w = imageData.width;
+            const h = imageData.height;
+
+            // Convert to grayscale and apply contrast
+            const mid = 128;
+            for (let i = 0; i < data.length; i++) {
+                let val = data[i];
+                if (invert) val = 255 - val;
+                data[i] = Math.min(255, Math.max(0, mid + (val - mid) * contrast));
+            }
+
+            // Edge enhancement (simplified)
+            const enhanced = new Float32Array(data);
+            for (let y = 1; y < h - 1; y++) {
+                for (let x = 1; x < w - 1; x++) {
+                    const idx = y * w + x;
+                    const center = data[idx];
+                    const left = data[y * w + (x - 1)];
+                    const right = data[y * w + (x + 1)];
+                    const up = data[(y - 1) * w + x];
+                    const down = data[(y + 1) * w + x];
+                    const laplacian = 4 * center - left - right - up - down;
+                    enhanced[idx] = Math.min(255, Math.max(0, center + laplacian * 0.3));
+                }
+            }
+
+            return enhanced;
+        }
+
+        precomputePaths() {
+            const w = this.canvasWidth;
+            const h = this.canvasHeight;
+            this.paths = [];
+
+            for (let i = 0; i < this.nodes.length; i++) {
+                this.paths[i] = [];
+                for (let j = 0; j < this.nodes.length; j++) {
+                    this.paths[i][j] = this.bresenhamPath(this.nodes[i], this.nodes[j], w, h);
+                }
+            }
+        }
+
+        bresenhamPath(start, end, w, h) {
+            let x1 = Math.round(start[0]);
+            let y1 = Math.round(start[1]);
+            let x2 = Math.round(end[0]);
+            let y2 = Math.round(end[1]);
+
+            x1 = Math.max(0, Math.min(w - 1, x1));
+            y1 = Math.max(0, Math.min(h - 1, y1));
+            x2 = Math.max(0, Math.min(w - 1, x2));
+            y2 = Math.max(0, Math.min(h - 1, y2));
+
+            const path = [];
+            if (x1 === x2 && y1 === y2) return path;
+
+            const dx = Math.abs(x2 - x1);
+            const dy = Math.abs(y2 - y1);
+            const sx = x1 < x2 ? 1 : -1;
+            const sy = y1 < y2 ? 1 : -1;
+            let err = dx - dy;
+
+            while (true) {
+                path.push([x1, y1]);
+                if (x1 === x2 && y1 === y2) break;
+                const e2 = 2 * err;
+                if (e2 > -dy) { err -= dy; x1 += sx; }
+                if (e2 < dx) { err += dx; y1 += sy; }
+            }
+
+            return path;
+        }
+
+        chooseDarkestPath(startNail) {
+            let maxDarkness = -1;
+            let darkestNail = startNail;
+            let darkestPath = [];
+
+            for (let i = 0; i < this.nodes.length; i++) {
+                if (i === startNail) continue;
+                const path = this.paths[startNail][i];
+                let darkness = 0;
+                for (const point of path) {
+                    const idx = point[1] * this.canvasWidth + point[0];
+                    darkness += this.data[idx];
+                }
+
+                if (darkness > maxDarkness) {
+                    maxDarkness = darkness;
+                    darkestNail = i;
+                    darkestPath = path;
+                }
+            }
+
+            return { nail: darkestNail, path: darkestPath };
+        }
+
+        generate(progressCallback) {
+            const totalIterations = this.iterations;
+            this.pattern = [];
+            let currentNail = this.seed;
+            const originalData = new Float32Array(this.data);
+
+            for (let i = 0; i < totalIterations; i++) {
+                const result = this.chooseDarkestPath(currentNail);
+
+                // Add to pattern
+                this.pattern.push({
+                    from: currentNail,
+                    to: result.nail,
+                    path: result.path
+                });
+
+                // Subtract path from data
+                for (const point of result.path) {
+                    const idx = point[1] * this.canvasWidth + point[0];
+                    this.data[idx] = Math.max(0, this.data[idx] - this.weight);
+                }
+
+                // Check if image is fully dark
+                let remaining = 0;
+                for (let j = 0; j < this.data.length; j++) {
+                    remaining += this.data[j];
+                }
+                if (remaining <= 0) {
+                    console.log(`Stopping at iteration ${i}: No more data`);
+                    break;
+                }
+
+                currentNail = result.nail;
+
+                if (progressCallback && i % 50 === 0) {
+                    progressCallback(i / totalIterations);
+                }
+            }
+
+            this.residual = new Float32Array(this.data);
+            this.data = originalData;
+            return this.pattern;
+        }
+
+        renderToCanvas(canvas, showNails) {
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = '#0a0a16';
+            ctx.fillRect(0, 0, w, h);
+
+            // Draw threads
+            const scaleX = w / this.canvasWidth;
+            const scaleY = h / this.canvasHeight;
+
+            ctx.strokeStyle = '#f2e9c2';
+            ctx.lineWidth = parseFloat(document.getElementById('widthSlider').value);
+            ctx.shadowColor = '#b8a87a';
+            ctx.shadowBlur = 1.5;
+            ctx.lineCap = 'round';
+
+            // Batch draw all lines for performance
+            ctx.beginPath();
+            for (const step of this.pattern) {
+                const from = this.nodes[step.from];
+                const to = this.nodes[step.to];
+                ctx.moveTo(from[0] * scaleX, from[1] * scaleY);
+                ctx.lineTo(to[0] * scaleX, to[1] * scaleY);
+            }
+            ctx.stroke();
+
+            // Draw nails
+            if (showNails) {
+                ctx.shadowBlur = 0;
+                const nailRadius = Math.max(2, w / 200);
+                const fontSize = Math.max(8, w / 60);
+
+                ctx.font = `${fontSize}px system-ui, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                for (let i = 0; i < this.nodes.length; i++) {
+                    const node = this.nodes[i];
+                    const x = node[0] * scaleX;
+                    const y = node[1] * scaleY;
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, nailRadius, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#e0d6b0';
+                    ctx.fill();
+
+                    // Show nail numbers
+                    ctx.fillStyle = '#8888aa';
+                    ctx.fillText(i + 1, x, y - nailRadius - fontSize * 0.6);
+                }
+            }
+        }
+    }
+
+    // ---------- Main application ----------
+    const canvas = document.getElementById('stringCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const nailsSlider = document.getElementById('nailsSlider');
+    const nailsLabel = document.getElementById('nailsLabel');
+    const iterationsSlider = document.getElementById('iterationsSlider');
+    const iterationsLabel = document.getElementById('iterationsLabel');
+    const weightSlider = document.getElementById('weightSlider');
+    const weightLabel = document.getElementById('weightLabel');
+    const widthSlider = document.getElementById('widthSlider');
+    const widthLabel = document.getElementById('widthLabel');
+    const contrastSlider = document.getElementById('contrastSlider');
+    const contrastLabel = document.getElementById('contrastLabel');
+    const invertCheck = document.getElementById('invertCheck');
+    const showNailsCheck = document.getElementById('showNails');
+    const fileInput = document.getElementById('imageUpload');
+    const generateBtn = document.getElementById('generateBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+    const infoText = document.getElementById('infoText');
+    const statusText = document.getElementById('statusText');
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+
+    let generator = new StringArtGenerator();
+    let sourceImageData = null;
+    let processedData = null;
+    let isGenerating = false;
+
+    function drawPlaceholder() {
+        canvas.width = 800;
+        canvas.height = 800;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#0a0a16';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#5f5f8a';
+        ctx.font = '22px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🖼️ Upload image', canvas.width/2, canvas.height/2 - 24);
+        ctx.font = '16px system-ui, sans-serif';
+        ctx.fillStyle = '#7a7aa0';
+        ctx.fillText('Adjust parameters & generate', canvas.width/2, canvas.height/2 + 30);
+        statusText.textContent = 'Ready';
+    }
+
+    function loadImage(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const size = 800;
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = size;
+                tempCanvas.height = size;
+                const tCtx = tempCanvas.getContext('2d');
+                tCtx.drawImage(img, 0, 0, size, size);
+
+                const imageData = tCtx.getImageData(0, 0, size, size);
+                const data = new Float32Array(size * size);
+                for (let i = 0; i < imageData.data.length; i += 4) {
+                    const idx = i / 4;
+                    data[idx] = 0.299 * imageData.data[i] + 0.587 * imageData.data[i + 1] + 0.114 * imageData.data[i + 2];
+                }
+
+                sourceImageData = {
+                    data: data,
+                    width: size,
+                    height: size
+                };
+
+                applyFiltersAndGenerate();
+                infoText.textContent = `📸 Image loaded (${size}×${size})`;
+                statusText.textContent = 'Image loaded';
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function applyFiltersAndGenerate() {
+        if (!sourceImageData) {
+            infoText.textContent = '⚠️ Please upload an image first.';
+            return;
+        }
+
+        const contrast = parseFloat(contrastSlider.value);
+        const invert = invertCheck.checked;
+
+        const processed = generator.preprocess(sourceImageData.data, contrast, invert);
+        processedData = {
+            data: processed,
+            width: sourceImageData.width,
+            height: sourceImageData.height
+        };
+
+        // Update generator with processed data
+        generator.data = new Float32Array(processed);
+        generator.originalData = new Float32Array(processed);
+        generator.canvasWidth = sourceImageData.width;
+        generator.canvasHeight = sourceImageData.height;
+
+        // Update generator parameters
+        generator.nails = parseInt(nailsSlider.value);
+        generator.iterations = parseInt(iterationsSlider.value);
+        generator.weight = parseInt(weightSlider.value);
+
+        generator.setNodesCircle(generator.canvasWidth, generator.canvasHeight);
+        generator.precomputePaths();
+
+        statusText.textContent = 'Filters applied. Click Generate.';
+        infoText.textContent = '✅ Filters applied. Click Generate to create string art.';
+    }
+
+    function generateStringArt() {
+        if (!processedData && !sourceImageData) {
+            infoText.textContent = '⚠️ Please upload an image first.';
+            return;
+        }
+
+        if (isGenerating) return;
+        isGenerating = true;
+
+        // Use processed data if available, otherwise use source
+        const data = processedData || sourceImageData;
+        generator.data = new Float32Array(data.data);
+        generator.originalData = new Float32Array(data.data);
+        generator.canvasWidth = data.width;
+        generator.canvasHeight = data.height;
+
+        // Update parameters
+        generator.nails = parseInt(nailsSlider.value);
+        generator.iterations = parseInt(iterationsSlider.value);
+        generator.weight = parseInt(weightSlider.value);
+
+        generator.setNodesCircle(generator.canvasWidth, generator.canvasHeight);
+        generator.precomputePaths();
+
+        // Show progress
+        progressBar.classList.add('active');
+        statusText.textContent = 'Generating...';
+
+        // Use setTimeout to allow UI to update
+        setTimeout(() => {
+            try {
+                const pattern = generator.generate((progress) => {
+                    progressFill.style.width = `${progress * 100}%`;
+                });
+
+                progressFill.style.width = '100%';
+                statusText.textContent = `✅ Complete! ${pattern.length} lines drawn`;
+                infoText.textContent = `✨ Generated with ${generator.nails} nails, ${pattern.length} lines`;
+
+                // Render to canvas
+                canvas.width = 800;
+                canvas.height = 800;
+                generator.renderToCanvas(canvas, showNailsCheck.checked);
+
+            } catch (err) {
+                console.error(err);
+                statusText.textContent = '❌ Error generating';
+                infoText.textContent = 'Error: ' + err.message;
+            }
+
+            progressBar.classList.remove('active');
+            isGenerating = false;
+        }, 100);
+    }
+
+    function resetAll() {
+        nailsSlider.value = '100';
+        iterationsSlider.value = '1000';
+        weightSlider.value = '20';
+        widthSlider.value = '1.5';
+        contrastSlider.value = '1.2';
+        invertCheck.checked = false;
+        showNailsCheck.checked = true;
+
+        updateLabels();
+        sourceImageData = null;
+        processedData = null;
+        generator = new StringArtGenerator();
+        drawPlaceholder();
+        infoText.textContent = '↺ Reset to defaults · upload an image.';
+        fileInput.value = '';
+        statusText.textContent = 'Ready';
+        progressBar.classList.remove('active');
+    }
+
+    function updateLabels() {
+        nailsLabel.textContent = nailsSlider.value;
+        iterationsLabel.textContent = iterationsSlider.value;
+        weightLabel.textContent = weightSlider.value;
+        widthLabel.textContent = parseFloat(widthSlider.value).toFixed(1);
+        contrastLabel.textContent = parseFloat(contrastSlider.value).toFixed(2);
+    }
+
+    function updateShowNails() {
+        if (generator.pattern.length > 0) {
+            generator.renderToCanvas(canvas, showNailsCheck.checked);
+        }
+    }
+
+    // ---------- Event binding ----------
+    [nailsSlider, iterationsSlider, weightSlider, widthSlider, contrastSlider].forEach(slider => {
+        slider.addEventListener('input', updateLabels);
+    });
+
+    showNailsCheck.addEventListener('change', updateShowNails);
+
+    generateBtn.addEventListener('click', generateStringArt);
+
+    applyFiltersBtn.addEventListener('click', () => {
+        if (!sourceImageData) {
+            infoText.textContent = '⚠️ Upload an image first.';
+            return;
+        }
+        applyFiltersAndGenerate();
+    });
+
+    resetFiltersBtn.addEventListener('click', () => {
+        contrastSlider.value = '1.2';
+        invertCheck.checked = false;
+        updateLabels();
+        if (sourceImageData) {
+            applyFiltersAndGenerate();
+        } else {
+            infoText.textContent = 'Filters reset. Upload image.';
+        }
+    });
+
+    resetBtn.addEventListener('click', resetAll);
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+            loadImage(e.target.files[0]);
+        }
+    });
+
+    // ---------- Init ----------
+    updateLabels();
+    drawPlaceholder();
+</script>
+</body>
+</html>

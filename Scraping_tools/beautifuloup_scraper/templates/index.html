@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beautiful Soup Scraper Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        .scraped-data {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        .batch-url-input {
+            min-height: 100px;
+        }
+        .loading {
+            display: none;
+        }
+        .result-item {
+            border-left: 4px solid #0d6efd;
+            padding-left: 15px;
+            margin-bottom: 10px;
+        }
+        .export-buttons .btn {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-10 mx-auto">
+                <h1 class="text-primary mb-4">
+                    <i class="bi bi-file-code"></i> 
+                    Beautiful Soup Scraper
+                    <small class="text-muted fs-6">with Export & Batch Processing</small>
+                </h1>
+
+                <!-- Mode Selection -->
+                <div class="btn-group w-100 mb-4" role="group">
+                    <input type="radio" class="btn-check" name="mode" id="singleMode" value="single" checked>
+                    <label class="btn btn-outline-primary" for="singleMode">
+                        <i class="bi bi-file-earmark"></i> Single URL
+                    </label>
+                    <input type="radio" class="btn-check" name="mode" id="batchMode" value="batch">
+                    <label class="btn btn-outline-primary" for="batchMode">
+                        <i class="bi bi-files"></i> Batch URLs
+                    </label>
+                </div>
+
+                <!-- Single URL Mode -->
+                <div id="singleModeContent" class="card shadow mb-4">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="url" class="form-label">Website URL</label>
+                            <div class="input-group">
+                                <input type="url" class="form-control" id="url" 
+                                       placeholder="https://example.com" 
+                                       value="https://example.com">
+                                <button class="btn btn-outline-secondary" type="button" id="previewBtn">
+                                    <i class="bi bi-eye"></i> Preview
+                                </button>
+                            </div>
+                            <div id="previewResult" class="mt-2 small text-muted"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="selector" class="form-label">CSS Selector (optional)</label>
+                            <input type="text" class="form-control" id="selector" 
+                                   placeholder=".main-content, #title, .product-item">
+                        </div>
+
+                        <button class="btn btn-success btn-lg w-100" id="scrapeBtn">
+                            <i class="bi bi-play-circle"></i> Scrape Now
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Batch Mode -->
+                <div id="batchModeContent" class="card shadow mb-4" style="display: none;">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="batchUrls" class="form-label">Enter URLs (one per line)</label>
+                            <textarea class="form-control batch-url-input" id="batchUrls" 
+                                      placeholder="https://example.com
+https://example.org
+https://example.net"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="batchSelector" class="form-label">CSS Selector (optional)</label>
+                            <input type="text" class="form-control" id="batchSelector" 
+                                   placeholder=".main-content, #title">
+                        </div>
+
+                        <button class="btn btn-primary btn-lg w-100" id="batchScrapeBtn">
+                            <i class="bi bi-play-circle"></i> Scrape All URLs
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="resultContainer" style="display: none;">
+                    <div class="card shadow">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-file-text"></i> Scraped Data</h5>
+                            <div class="export-buttons">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-success dropdown-toggle" type="button" 
+                                            id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-download"></i> Export
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                                        <li>
+                                            <button class="dropdown-item" id="exportCsvBtn">
+                                                <i class="bi bi-file-earmark-excel"></i> CSV (Summary)
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item" id="exportCsvDetailedBtn">
+                                                <i class="bi bi-file-earmark-excel"></i> CSV (Detailed)
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item" id="exportJsonBtn">
+                                                <i class="bi bi-file-earmark-code"></i> JSON
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item" id="exportTxtBtn">
+                                                <i class="bi bi-file-earmark-text"></i> Text
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <button class="btn btn-sm btn-secondary" id="clearResultsBtn">
+                                    <i class="bi bi-x-circle"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="loadingIndicator" class="text-center py-4" style="display: none;">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Scraping in progress...</p>
+                            </div>
+                            <div id="resultContent"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Add this after the results card in your HTML -->
+                <div class="modal fade" id="exportModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="bi bi-download"></i> Confirm Export
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="exportPreviewContent">
+                                    <div class="text-center">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-success" id="confirmExportBtn">
+                                    <i class="bi bi-check-circle"></i> Confirm Export
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- Bootstrap JS Bundle with Popper - Required for dropdowns -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle between single and batch mode
+        document.querySelectorAll('input[name="mode"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('singleModeContent').style.display = 
+                    this.value === 'single' ? 'block' : 'none';
+                document.getElementById('batchModeContent').style.display = 
+                    this.value === 'batch' ? 'block' : 'none';
+            });
+        });
+
+        // Store scraped data for export
+        let scrapedData = [];
+
+        // Preview functionality (single)
+        document.getElementById('previewBtn').addEventListener('click', async function() {
+            const url = document.getElementById('url').value;
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            const previewDiv = document.getElementById('previewResult');
+            previewDiv.innerHTML = '<span class="text-info">Checking...</span>';
+
+            try {
+                const response = await fetch('/preview', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url: url})
+                });
+                const data = await response.json();
+                
+                if (data.error) {
+                    previewDiv.innerHTML = `<span class="text-danger">⚠️ ${data.error}</span>`;
+                } else {
+                    previewDiv.innerHTML = `
+                        <span class="text-success">✅ ${data.title}</span>
+                        <span class="badge bg-info ms-2">Status: ${data.status}</span>
+                        <span class="badge bg-secondary ms-2">${data.content_type}</span>
+                    `;
+                }
+            } catch (error) {
+                previewDiv.innerHTML = `<span class="text-danger">⚠️ ${error.message}</span>`;
+            }
+        });
+
+        // Single scrape
+        document.getElementById('scrapeBtn').addEventListener('click', async function() {
+            const url = document.getElementById('url').value;
+            const selector = document.getElementById('selector').value;
+            
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            await performScrape([{url, selector}], 'Single URL');
+        });
+
+        // Batch scrape
+        document.getElementById('batchScrapeBtn').addEventListener('click', async function() {
+            const urlsText = document.getElementById('batchUrls').value;
+            const selector = document.getElementById('batchSelector').value;
+            
+            if (!urlsText) {
+                alert('Please enter at least one URL');
+                return;
+            }
+
+            const urls = urlsText.split('\n').filter(url => url.trim());
+            const scrapeTasks = urls.map(url => ({url: url.trim(), selector}));
+            
+            await performScrape(scrapeTasks, `Batch (${urls.length} URLs)`);
+        });
+
+        // Core scrape function
+        async function performScrape(tasks, label) {
+            const resultContainer = document.getElementById('resultContainer');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const resultContent = document.getElementById('resultContent');
+            
+            resultContainer.style.display = 'block';
+            loadingIndicator.style.display = 'block';
+            resultContent.innerHTML = '';
+            document.querySelectorAll('button:not(.btn-outline-secondary):not(.btn-secondary)').forEach(btn => 
+                btn.disabled = true
+            );
+
+            try {
+                if (tasks.length === 1) {
+                    // Single scrape
+                    const response = await fetch('/scrape', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            url: tasks[0].url,
+                            selector: tasks[0].selector
+                        })
+                    });
+                    const data = await response.json();
+                    scrapedData = [data];
+                    displayResults([data], label);
+                } else {
+                    // Batch scrape
+                    const response = await fetch('/scrape/batch', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            urls: tasks.map(t => t.url),
+                            selector: tasks[0].selector
+                        })
+                    });
+                    const data = await response.json();
+                    scrapedData = data.results || [];
+                    displayResults(scrapedData, label);
+                }
+            } catch (error) {
+                resultContent.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-x-circle"></i> ${error.message}
+                    </div>
+                `;
+            } finally {
+                loadingIndicator.style.display = 'none';
+                document.querySelectorAll('button:not(.btn-outline-secondary):not(.btn-secondary)').forEach(btn => 
+                    btn.disabled = false
+                );
+            }
+        }
+
+        // Display results
+        function displayResults(data, label) {
+            const resultContent = document.getElementById('resultContent');
+            
+            if (!data || data.length === 0 || data[0]?.error) {
+                resultContent.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> 
+                        ${data[0]?.error || 'No data found'}
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 
+                    ${label} - Found ${data.length} result(s)
+                    <span class="badge bg-primary ms-2">${new Date().toLocaleTimeString()}</span>
+                </div>
+            `;
+
+            data.forEach((item, index) => {
+                if (item.error) {
+                    html += `
+                        <div class="alert alert-danger result-item">
+                            <strong>${item.url}</strong><br>
+                            ⚠️ ${item.error}
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="result-item">
+                            <strong>${index + 1}. ${item.title || 'No title'}</strong>
+                            <span class="badge bg-success ms-2">${item.status_code}</span>
+                            <span class="badge bg-info ms-2">${item.count || 0} items</span>
+                            <br>
+                            <small class="text-muted">${item.url}</small>
+                            <div class="mt-2">
+                                <pre class="bg-light p-2 rounded" style="max-height: 150px; overflow-y: auto;">${JSON.stringify(item.data, null, 2)}</pre>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            resultContent.innerHTML = html;
+        }
+
+        // Export CSV (Summary)
+        document.getElementById('exportCsvBtn').addEventListener('click', async function() {
+            if (scrapedData.length === 0) {
+                alert('No data to export. Scrape something first!');
+                return;
+            }
+            await exportData('/export/csv', 'csv');
+        });
+
+        // Export CSV (Detailed)
+        document.getElementById('exportCsvDetailedBtn').addEventListener('click', async function() {
+            if (scrapedData.length === 0) {
+                alert('No data to export. Scrape something first!');
+                return;
+            }
+            await exportData('/export/csv/detailed', 'csv');
+        });
+
+        // Export JSON
+        document.getElementById('exportJsonBtn').addEventListener('click', async function() {
+            if (scrapedData.length === 0) {
+                alert('No data to export. Scrape something first!');
+                return;
+            }
+            await exportData('/export/json', 'json');
+        });
+
+        // Export Text
+        document.getElementById('exportTxtBtn').addEventListener('click', async function() {
+            if (scrapedData.length === 0) {
+                alert('No data to export. Scrape something first!');
+                return;
+            }
+            await exportData('/export/txt', 'txt');
+        });
+
+        // Shared export function
+        async function exportData(endpoint, format) {
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        data: scrapedData,
+                        filename: `scrape_${new Date().toISOString().slice(0,10)}`
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Export failed');
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `scrape_${new Date().toISOString().slice(0,10)}.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                alert('Export failed: ' + error.message);
+            }
+        }
+
+        // Clear results
+        document.getElementById('clearResultsBtn').addEventListener('click', function() {
+            document.getElementById('resultContainer').style.display = 'none';
+            document.getElementById('resultContent').innerHTML = '';
+            scrapedData = [];
+        });
+
+        let exportPreviewShown = false;
+
+        function showExportPreview() {
+            if (exportPreviewShown) return;
+            if (scrapedData.length === 0) {
+                alert('No data to export. Scrape something first!');
+                return;
+            }
+            
+            exportPreviewShown = true;
+            const resultContent = document.getElementById('resultContent');
+            
+            // Count items
+            let totalItems = 0;
+            scrapedData.forEach(item => {
+                if (Array.isArray(item.data)) {
+                    totalItems += item.data.length;
+                } else {
+                    totalItems += 1;
+                }
+            });
+            
+            const previewHTML = `
+                <div class="alert alert-success mt-3" id="exportPreviewAlert">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-check-circle"></i>
+                            <strong>Ready to export:</strong>
+                            ${scrapedData.length} URL(s) with ${totalItems} item(s)
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-success me-1" onclick="doExport('/export/csv', 'csv')">
+                                <i class="bi bi-file-earmark-excel"></i> CSV
+                            </button>
+                            <button class="btn btn-sm btn-info me-1" onclick="doExport('/export/json', 'json')">
+                                <i class="bi bi-file-earmark-code"></i> JSON
+                            </button>
+                            <button class="btn btn-sm btn-secondary me-1" onclick="doExport('/export/txt', 'txt')">
+                                <i class="bi bi-file-earmark-text"></i> TXT
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="cancelExportPreview()">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            resultContent.insertAdjacentHTML('beforeend', previewHTML);
+        }
+
+        function cancelExportPreview() {
+            const alert = document.getElementById('exportPreviewAlert');
+            if (alert) alert.remove();
+            exportPreviewShown = false;
+        }
+
+        async function doExport(endpoint, format) {
+            await exportData(endpoint, format);
+            cancelExportPreview();
+        }
+
+        // Override export button clicks to show preview first
+        document.getElementById('exportCsvBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            showExportPreview();
+        });
+
+        document.getElementById('exportJsonBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            showExportPreview();
+        });
+
+        document.getElementById('exportTxtBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            showExportPreview();
+        });
+
+    </script>
+</body>
+</html>

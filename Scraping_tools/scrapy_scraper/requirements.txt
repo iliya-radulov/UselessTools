@@ -1,0 +1,5 @@
+Flask==2.3.2
+Scrapy==2.11.2
+twisted==24.3.0
+python-dotenv==1.0.0
+itemadapter==0.8.0
