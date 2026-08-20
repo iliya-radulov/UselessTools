@@ -1,0 +1,46 @@
+# Example configuration for the generic Selenium scraper.
+# Copy this file to config.yaml and edit the values for your target site.
+
+# The page to start scraping from.
+start_url: "https://example.com/products"
+
+# Run Chrome without a visible window. Set to false to watch it work / debug selectors.
+headless: true
+
+# How many seconds to wait for items to appear before giving up on a page.
+wait_seconds: 10
+
+# Pause (seconds) between pages, to be polite to the target server.
+delay_between_pages: 1.5
+
+# Optional: override the browser's user-agent string.
+user_agent: null
+
+# CSS selector matching each repeating "card"/"row" you want to extract on the page.
+item_selector: "div.product-card"
+
+# Fields to pull out of every matched item.
+#   selector:  CSS selector *relative to the item* (use "." to target the item itself)
+#   attribute: "text" for visible text, "href"/"src" for links/images,
+#              or any other HTML attribute name (e.g. "data-id")
+fields:
+  title:
+    selector: "h2.product-title"
+    attribute: "text"
+  price:
+    selector: "span.price"
+    attribute: "text"
+  link:
+    selector: "a.product-link"
+    attribute: "href"
+
+# Optional pagination support.
+pagination:
+  enabled: true
+  next_button_selector: "a.next-page"
+  max_pages: 5
+
+# Where and how to save results.
+output:
+  format: "csv"          # "csv" or "xlsx"
+  path: "output/results.csv"
