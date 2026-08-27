@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фёдор Достоевский — Братья Карамазовы</title>
+    <style>
+        /* ============================================================
+           THEME VARIABLES - DOSTOEVSKY (Dark Russian / Philosophical)
+           ============================================================ */
+        :root {
+            --bg-color: #1a1410;
+            --text-color: #e8ddd0;
+            --accent-color: #8b2a2a;
+            --secondary-accent: #c9a86c;
+            --font-family: 'Georgia', 'Palatino', 'Times New Roman', serif;
+            --border-style: 2px solid var(--accent-color);
+        }
+
+        /* ============================================================
+           RESET & BASE
+           ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            min-height: 100vh;
+            line-height: 1.8;
+            overflow-x: hidden;
+        }
+
+        /* ============================================================
+           SNOWFALL BACKGROUND
+           ============================================================ */
+        #snowfall {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .snowflake {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.03);
+            font-size: 20px;
+            animation: fall linear infinite;
+            user-select: none;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(calc(100vh + 100px)) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* ============================================================
+           DECORATIVE RUSSIAN ORTHODOX CROSS BORDER
+           ============================================================ */
+        #border-decor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            border: 2px solid rgba(139, 42, 42, 0.05);
+            box-shadow: inset 0 0 100px rgba(139, 42, 42, 0.02);
+        }
+
+        /* ============================================================
+           HERO SECTION
+           ============================================================ */
+        .hero {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 4rem 2rem;
+            text-align: center;
+            background: radial-gradient(
+                ellipse at center,
+                rgba(26, 20, 16, 0.6) 0%,
+                rgba(26, 20, 16, 0.95) 100%
+            );
+        }
+
+        .hero-ornament {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            opacity: 0.15;
+            letter-spacing: 15px;
+            margin-bottom: 0.5rem;
+            font-family: 'Georgia', serif;
+        }
+
+        .hero-title {
+            font-size: 4.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+            text-shadow: 0 0 60px rgba(139, 42, 42, 0.1);
+            margin-bottom: 0.3rem;
+            letter-spacing: -1px;
+            font-family: 'Georgia', serif;
+        }
+
+        .hero-title .accent {
+            color: var(--accent-color);
+        }
+
+        .hero-subtitle {
+            font-size: 1.8rem;
+            color: var(--secondary-accent);
+            font-weight: 300;
+            letter-spacing: 6px;
+            margin-bottom: 0.5rem;
+            opacity: 0.5;
+            font-style: italic;
+            font-family: 'Georgia', serif;
+        }
+
+        .hero-subtitle small {
+            display: block;
+            font-size: 1rem;
+            opacity: 0.3;
+            margin-top: 0.2rem;
+            letter-spacing: 3px;
+            font-style: normal;
+            font-weight: 300;
+        }
+
+        /* Hero Icons Grid */
+        .hero-icons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            max-width: 800px;
+            width: 100%;
+            margin: 2.5rem auto;
+        }
+
+        .hero-icon-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 1.5rem 0.5rem;
+            border: 1px solid rgba(139, 42, 42, 0.1);
+            border-radius: 4px;
+            background: rgba(0,0,0,0.3);
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .hero-icon-item::before {
+            content: '†';
+            position: absolute;
+            top: -10px;
+            right: -5px;
+            font-size: 1rem;
+            color: var(--accent-color);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .hero-icon-item:hover {
+            transform: translateY(-6px) scale(1.02);
+            border-color: var(--accent-color);
+            background: rgba(139, 42, 42, 0.05);
+            box-shadow: 0 8px 30px rgba(139, 42, 42, 0.05);
+        }
+
+        .hero-icon-item:hover::before {
+            opacity: 0.4;
+        }
+
+        .hero-icon-item .icon {
+            font-size: 3.5rem;
+            line-height: 1;
+            position: relative;
+            z-index: 1;
+            filter: grayscale(0.2);
+            transition: filter 0.4s ease;
+        }
+
+        .hero-icon-item:hover .icon {
+            filter: grayscale(0);
+        }
+
+        .hero-icon-item .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--secondary-accent);
+            opacity: 0.5;
+            position: relative;
+            z-index: 1;
+            font-weight: 600;
+        }
+
+        .hero-icon-item .description {
+            font-size: 0.65rem;
+            color: var(--secondary-accent);
+            opacity: 0.25;
+            font-style: italic;
+            position: relative;
+            z-index: 1;
+        }
+
+        .dostoevsky-quote {
+            font-size: 1.4rem;
+            color: var(--text-color);
+            opacity: 0.35;
+            letter-spacing: 1px;
+            margin: 1rem 0;
+            font-style: italic;
+            font-family: 'Georgia', serif;
+            max-width: 700px;
+            line-height: 1.8;
+            animation: gentlePulse 8s ease-in-out infinite;
+        }
+
+        @keyframes gentlePulse {
+            0%, 100% { opacity: 0.25; }
+            50% { opacity: 0.45; }
+        }
+
+        .dostoevsky-quote .source {
+            display: block;
+            font-size: 0.8rem;
+            opacity: 0.5;
+            margin-top: 0.3rem;
+            font-style: normal;
+            letter-spacing: 2px;
+        }
+
+        .scroll-indicator {
+            margin-top: 3rem;
+            color: var(--secondary-accent);
+            opacity: 0.1;
+            font-size: 0.7rem;
+            letter-spacing: 4px;
+            animation: bounceDown 3s ease-in-out infinite;
+        }
+
+        @keyframes bounceDown {
+            0%, 100% { transform: translateY(0); opacity: 0.1; }
+            50% { transform: translateY(8px); opacity: 0.3; }
+        }
+
+        /* ============================================================
+           MAIN CONTENT
+           ============================================================ */
+        .main-content {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .section-title {
+            font-size: 2.2rem;
+            color: var(--secondary-accent);
+            text-align: center;
+            margin-bottom: 3rem;
+            letter-spacing: 2px;
+            font-family: 'Georgia', serif;
+            font-weight: 300;
+            position: relative;
+        }
+
+        .section-title::before {
+            content: '†';
+            display: block;
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            opacity: 0.15;
+            margin-bottom: 0.5rem;
+        }
+
+        /* ============================================================
+           BOOK LIST
+           ============================================================ */
+        .book-list {
+            list-style: none;
+            margin: 2rem 0 3rem;
+        }
+
+        .book-list li {
+            font-size: 1.2rem;
+            padding: 0.8rem 1.2rem;
+            margin-bottom: 0.3rem;
+            border-bottom: 1px solid rgba(139, 42, 42, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .book-list li:hover {
+            border-bottom-color: var(--accent-color);
+            padding-left: 1.8rem;
+            background: rgba(139, 42, 42, 0.02);
+        }
+
+        .book-list .book-icon {
+            font-size: 1.5rem;
+            opacity: 0.3;
+        }
+
+        .book-list .title {
+            font-weight: 400;
+            flex: 1;
+            font-family: 'Georgia', serif;
+        }
+
+        .book-list .title .original {
+            font-size: 0.7rem;
+            opacity: 0.3;
+            font-style: italic;
+            margin-left: 0.5rem;
+            font-weight: 300;
+        }
+
+        .book-list .year {
+            font-size: 0.7rem;
+            color: var(--secondary-accent);
+            opacity: 0.3;
+            letter-spacing: 1px;
+        }
+
+        /* ============================================================
+           QUOTES
+           ============================================================ */
+        .quotes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 2rem 0 3rem;
+        }
+
+        .quote-card {
+            padding: 1.5rem;
+            border-left: 3px solid rgba(139, 42, 42, 0.2);
+            background: rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .quote-card:hover {
+            border-left-color: var(--accent-color);
+            background: rgba(139, 42, 42, 0.03);
+        }
+
+        .quote-card .quote-icon {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.2;
+        }
+
+        .quote-card blockquote {
+            font-style: italic;
+            font-size: 0.95rem;
+            color: var(--text-color);
+            opacity: 0.85;
+            font-family: 'Georgia', serif;
+        }
+
+        .quote-card .source {
+            display: block;
+            margin-top: 0.5rem;
+            font-style: normal;
+            font-weight: 400;
+            color: var(--accent-color);
+            opacity: 0.3;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* ============================================================
+           ICON GALLERY
+           ============================================================ */
+        .icon-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.8rem;
+            padding: 2rem 0;
+            border-top: 1px solid rgba(139, 42, 42, 0.05);
+            border-bottom: 1px solid rgba(139, 42, 42, 0.05);
+            margin: 2rem 0;
+        }
+
+        .icon-gallery .mini-icon {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+            padding: 0.6rem 1rem;
+            border: 1px solid rgba(139, 42, 42, 0.05);
+            border-radius: 4px;
+            background: rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            cursor: default;
+            min-width: 60px;
+        }
+
+        .icon-gallery .mini-icon:hover {
+            border-color: var(--accent-color);
+            background: rgba(139, 42, 42, 0.05);
+            transform: scale(1.05);
+        }
+
+        .icon-gallery .mini-icon .emoji {
+            font-size: 1.5rem;
+            filter: grayscale(0.3);
+        }
+
+        .icon-gallery .mini-icon:hover .emoji {
+            filter: grayscale(0);
+        }
+
+        .icon-gallery .mini-icon .tag {
+            font-size: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.25;
+        }
+
+        /* ============================================================
+           CLOSING
+           ============================================================ */
+        .closing {
+            text-align: center;
+            padding: 3rem 0 1rem;
+            border-top: 1px solid rgba(139, 42, 42, 0.05);
+            margin-top: 2rem;
+        }
+
+        .closing .closing-text {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: var(--secondary-accent);
+            opacity: 0.2;
+            letter-spacing: 4px;
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            line-height: 2;
+        }
+
+        .closing .closing-emoji {
+            display: inline-block;
+            font-size: 2rem;
+            opacity: 0.15;
+            margin: 0 0.5rem;
+        }
+
+        /* ============================================================
+           META
+           ============================================================ */
+        .meta {
+            display: flex;
+            justify-content: center;
+            gap: 2.5rem;
+            flex-wrap: wrap;
+            padding: 1.5rem 0 0;
+            font-size: 0.7rem;
+            color: var(--secondary-accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.2;
+        }
+
+        .meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 3rem;
+            }
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+            .hero-icons {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            .hero-icon-item .icon {
+                font-size: 2.5rem;
+            }
+            .quotes-grid {
+                grid-template-columns: 1fr;
+            }
+            .section-title {
+                font-size: 1.8rem;
+            }
+            .book-list li {
+                font-size: 1rem;
+                padding: 0.6rem 1rem;
+            }
+            .icon-gallery .mini-icon {
+                min-width: 50px;
+                padding: 0.4rem 0.6rem;
+            }
+            .icon-gallery .mini-icon .emoji {
+                font-size: 1.2rem;
+            }
+            .dostoevsky-quote {
+                font-size: 1.1rem;
+            }
+            .hero-ornament {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-icons {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.6rem;
+            }
+            .hero-icon-item {
+                padding: 1rem 0.3rem;
+            }
+            .hero-icon-item .icon {
+                font-size: 2rem;
+            }
+            .hero-icon-item .label {
+                font-size: 0.55rem;
+            }
+            .hero-icon-item .description {
+                display: none;
+            }
+            .hero-title {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<a href="rag-triz.html" style="position:fixed;top:16px;left:16px;z-index:999;color:var(--accent-color);font-family:var(--font-family, sans-serif);font-size:0.8rem;text-decoration:none;opacity:0.6;letter-spacing:1px;">← TRIZ + RAG</a>
+
+    <!-- ============================================================
+    SNOWFALL BACKGROUND
+    ============================================================ -->
+    <div id="snowfall"></div>
+    <div id="border-decor"></div>
+
+    <!-- ============================================================
+    HERO SECTION
+    ============================================================ -->
+    <section class="hero">
+        <div class="hero-ornament">† † †</div>
+        
+        <h1 class="hero-title">
+            Фёдор <span class="accent">Достоевский</span>
+        </h1>
+        <p class="hero-subtitle">
+            Братья Карамазовы
+            <small>The Brothers Karamazov</small>
+        </p>
+
+        <div class="dostoevsky-quote">
+            «Тайна человеческого бытия не в том, чтобы только жить, а в том, для чего жить».
+            <span class="source">— Братья Карамазовы</span>
+        </div>
+
+        <div class="hero-icons">
+            <div class="hero-icon-item">
+                <span class="icon">✝️</span>
+                <span class="label">Вера и сомнение</span>
+                <span class="description">"Великая тайна"</span>
+            </div>
+            <div class="hero-icon-item">
+                <span class="icon">💔</span>
+                <span class="label">Страдание</span>
+                <span class="description">"Искупительная боль"</span>
+            </div>
+            <div class="hero-icon-item">
+                <span class="icon">🧠</span>
+                <span class="label">Раскольников</span>
+                <span class="description">"Преступление и наказание"</span>
+            </div>
+            <div class="hero-icon-item">
+                <span class="icon">👨‍👦</span>
+                <span class="label">Карамазовы</span>
+                <span class="description">"Отец и сыновья"</span>
+            </div>
+            <div class="hero-icon-item">
+                <span class="icon">🕯️</span>
+                <span class="label">Великий инквизитор</span>
+                <span class="description">"Свобода vs безопасность"</span>
+            </div>
+            <div class="hero-icon-item">
+                <span class="icon">🌌</span>
+                <span class="label">Подполье</span>
+                <span class="description">"Записки из подполья"</span>
+            </div>
+            <div class="hero-icon-item">
+                <span class="icon">⚖️</span>
+                <span class="label">Правосудие</span>
+                <span class="description">"Весы истины"</span>
+            </div>
+            <div class="hero-icon-item">
+                <span class="icon">📖</span>
+                <span class="label">Идиот</span>
+                <span class="description">"Князь Мышкин"</span>
+            </div>
+        </div>
+
+        <div class="scroll-indicator">↓ Душа идёт по снегу ↓</div>
+    </section>
+
+    <!-- ============================================================
+    MAIN CONTENT
+    ============================================================ -->
+    <div class="main-content">
+        <h2 class="section-title">Книги</h2>
+
+        <ul class="book-list">
+            <li>
+                <span class="book-icon">📚</span>
+                <span class="title">Братья Карамазовы</span>
+                <span class="year">1880</span>
+            </li>
+            <li>
+                <span class="book-icon">📚</span>
+                <span class="title">Преступление и наказание</span>
+                <span class="year">1866</span>
+            </li>
+            <li>
+                <span class="book-icon">📚</span>
+                <span class="title">Идиот</span>
+                <span class="year">1869</span>
+            </li>
+            <li>
+                <span class="book-icon">📚</span>
+                <span class="title">Бесы</span>
+                <span class="year">1872</span>
+            </li>
+            <li>
+                <span class="book-icon">📚</span>
+                <span class="title">Записки из подполья</span>
+                <span class="year">1864</span>
+            </li>
+            <li>
+                <span class="book-icon">📚</span>
+                <span class="title">Игрок</span>
+                <span class="year">1867</span>
+            </li>
+        </ul>
+
+        <div class="icon-gallery">
+            <div class="mini-icon">
+                <span class="emoji">✝️</span>
+                <span class="tag">Вера</span>
+            </div>
+            <div class="mini-icon">
+                <span class="emoji">💔</span>
+                <span class="tag">Страдание</span>
+            </div>
+            <div class="mini-icon">
+                <span class="emoji">🧠</span>
+                <span class="tag">Раскольников</span>
+            </div>
+            <div class="mini-icon">
+                <span class="emoji">👨‍👦</span>
+                <span class="tag">Карамазовы</span>
+            </div>
+            <div class="mini-icon">
+                <span class="emoji">🕯️</span>
+                <span class="tag">Инквизитор</span>
+            </div>
+            <div class="mini-icon">
+                <span class="emoji">🌌</span>
+                <span class="tag">Подполье</span>
+            </div>
+            <div class="mini-icon">
+                <span class="emoji">⚖️</span>
+                <span class="tag">Правосудие</span>
+            </div>
+            <div class="mini-icon">
+                <span class="emoji">📖</span>
+                <span class="tag">Идиот</span>
+            </div>
+            <div class="mini-icon">
+                <span class="emoji">❄️</span>
+                <span class="tag">Зима</span>
+            </div>
+            <div class="mini-icon">
+                <span class="emoji">👁️</span>
+                <span class="tag">Душа</span>
+            </div>
+        </div>
+
+        <h2 class="section-title">Слова мудрости</h2>
+
+        <div class="quotes-grid">
+            <div class="quote-card">
+                <div class="quote-icon">💔</div>
+                <blockquote>
+                    «Чем темнее ночь, тем ярче звёзды, чем глубже горе, тем ближе Бог!»
+                </blockquote>
+                <span class="source">— Братья Карамазовы</span>
+            </div>
+            <div class="quote-card">
+                <div class="quote-icon">✝️</div>
+                <blockquote>
+                    «Если Бога нет, то всё дозволено».
+                </blockquote>
+                <span class="source">— Братья Карамазовы</span>
+            </div>
+            <div class="quote-card">
+                <div class="quote-icon">🧠</div>
+                <blockquote>
+                    «Человек есть тайна. Её надо разгадывать, и если будешь её разгадывать всю жизнь, то не говори, что потерял время».
+                </blockquote>
+                <span class="source">— Фёдор Достоевский</span>
+            </div>
+            <div class="quote-card">
+                <div class="quote-icon">🕯️</div>
+                <blockquote>
+                    «Тайна человеческого бытия не в том, чтобы только жить, а в том, для чего жить».
+                </blockquote>
+                <span class="source">— Братья Карамазовы</span>
+            </div>
+            <div class="quote-card" style="grid-column: 1 / -1;">
+                <div class="quote-icon">👁️</div>
+                <blockquote>
+                    «Самое главное — не лгите самому себе. Тот, кто лжёт себе и слушает свою же ложь, доходит до того, что уже не различает никакой правды ни в себе, ни вокруг, и потому теряет всякое уважение к себе и к другим».
+                </blockquote>
+                <span class="source">— Братья Карамазовы</span>
+            </div>
+        </div>
+
+        <div class="closing">
+            <div class="closing-text">
+                <span class="closing-emoji">❄️</span>
+                И душа идёт по снегу...
+                <span class="closing-emoji">✝️</span>
+            </div>
+        </div>
+
+        <div class="meta">
+            <span>🖋️ Родился: 1821</span>
+            <span>🕊️ Умер: 1881</span>
+            <span>🇷🇺 Русский</span>
+            <span>📖 Философская проза</span>
+            <span>✝️ Великая тайна</span>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    JAVASCRIPT
+    ============================================================ -->
+    <script>
+        const snowfallContainer = document.getElementById('snowfall');
+        const snowflakeChars = ['❄', '✦', '❋', '✧', '❁'];
+        
+        for (let i = 0; i < 80; i++) {
+            const flake = document.createElement('div');
+            flake.className = 'snowflake';
+            flake.textContent = snowflakeChars[Math.floor(Math.random() * snowflakeChars.length)];
+            flake.style.left = Math.random() * 100 + '%';
+            flake.style.fontSize = (Math.random() * 15 + 10) + 'px';
+            flake.style.animationDuration = (Math.random() * 15 + 15) + 's';
+            flake.style.animationDelay = (Math.random() * 20) + 's';
+            flake.style.opacity = Math.random() * 0.08 + 0.01;
+            snowfallContainer.appendChild(flake);
+        }
+
+        document.querySelectorAll('.hero-icon-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const messages = [
+                    '✝️ "Красота спасёт мир."',
+                    '💔 "Страдание — единственный источник сознания."',
+                    '🧠 "Я дурак, но я не подлец."',
+                    '👨‍👦 "Карамазовы не подлецы, а философы."',
+                    '🕯️ "Свобода — это способность выбирать собственное страдание."',
+                    '🌌 "Подполье — это правда."',
+                    '⚖️ "Правосудие без истины — ложь."',
+                    '📖 "Идиот видел мир чистыми глазами."',
+                    '❄️ "В русской зиме душа обнажается."',
+                    '👁️ "Душа — поле битвы добра и зла."'
+                ];
+                const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+                alert(randomMsg);
+            });
+        });
+
+        console.log('%c✝️ Достоевский — Братья Карамазовы ✝️', 'font-size: 24px; color: #c9a86c;');
+        console.log('%c❄️ "Чем темнее ночь, тем ярче звёзды."', 'font-size: 16px; color: #e8ddd0;');
+        console.log('%c💔 "Тайна человеческого бытия не в том, чтобы только жить, а в том, для чего жить."', 'font-size: 14px; color: #8b2a2a;');
+
+        setInterval(() => {
+            const ornaments = ['†', '✝', '†', '☦', '†'];
+            const el = document.querySelector('.hero-ornament');
+            if (el) {
+                const randomOrnament = ornaments[Math.floor(Math.random() * ornaments.length)];
+                el.textContent = `${randomOrnament} ${randomOrnament} ${randomOrnament}`;
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
