@@ -4,7 +4,11 @@ import json
 import os
 import webbrowser
 import math
-from datetime import datetime
+import zlib
+import base64
+
+NODE_TYPES = ("rectangle", "square", "circle", "ellipse", "diamond")
+CONNECTOR_TYPES = ("line", "arrow")
 
 class DiagramApp:
     def __init__(self, root):
@@ -38,6 +42,7 @@ class DiagramApp:
         self.canvas.bind("<ButtonRelease-1>", self.on_canvas_release)
         self.canvas.bind("<Double-Button-1>", self.on_shape_double_click)
         self.canvas.bind("<Delete>", lambda e: self.delete_selected())
+        self.canvas.bind("<BackSpace>", lambda e: self.delete_selected())  # macOS "delete" key
         
     def setup_ui(self):
         # Main container
@@ -245,10 +250,7 @@ class DiagramApp:
                 # item's id, e.g. a grid line's)
                 for shape_data in self.shapes:
                     if any(part == item[0] for part in shape_data["parts"]):
-                        self.selected_shape = shape_data
-                        self.drag_data["x"] = event.x
-                        self.drag_data["y"] = event.y
-                        self.highlight_shape(shape_data)
+                        self.select_shape(shape_data, event)
                         self.status_bar.config(text=f"Selected: {shape_data['type']} (ID: {shape_data['id']})")
                         # Change cursor to indicate selection
                         self.canvas.config(cursor="hand2")
@@ -262,16 +264,16 @@ class DiagramApp:
             self.status_bar.config(text="Deselected")
             return
         
-        # Draw mode - check if clicking on existing shape to select it (for convenience)
+        # Draw mode - clicking an existing shape selects it (for convenience),
+        # EXCEPT with the line/arrow and text tools: connectors are meant to
+        # start on a shape and labels to sit on one, so with those tools a
+        # click always draws.
         item = self.canvas.find_closest(event.x, event.y)
-        if item:
+        if item and self.shape_type.get() not in CONNECTOR_TYPES + ("text",):
             for shape_data in self.shapes:
                 if any(part == item[0] for part in shape_data["parts"]):
                     # Allow selection even in draw mode for convenience
-                    self.selected_shape = shape_data
-                    self.drag_data["x"] = event.x
-                    self.drag_data["y"] = event.y
-                    self.highlight_shape(shape_data)
+                    self.select_shape(shape_data, event)
                     self.status_bar.config(text=f"Selected: {shape_data['type']} (Click on canvas to deselect)")
                     self.canvas.focus_set()
                     return
@@ -299,7 +301,13 @@ class DiagramApp:
             self.selected_shape["y1"] += dy
             self.selected_shape["x2"] += dx
             self.selected_shape["y2"] += dy
-            
+
+            # Arrows/lines whose end touched this node move with it
+            for connector, end in self.drag_data.get("attached", []):
+                connector["x" + end] += dx
+                connector["y" + end] += dy
+                self.redraw_shape(connector)
+
             self.drag_data["x"] = event.x
             self.drag_data["y"] = event.y
             return
@@ -336,6 +344,7 @@ class DiagramApp:
             # Keep the shape selected after a move (or a plain click) so
             # Delete / Delete Selected have something to act on. Selection
             # is only cleared by clicking elsewhere (see on_canvas_click).
+            self.generate_mermaid()  # it may have moved, so connections may have changed
             self.status_bar.config(
                 text=f"Selected: {self.selected_shape['type']} (ID: {self.selected_shape['id']}) — press Delete to remove"
             )
@@ -387,28 +396,64 @@ class DiagramApp:
         if self.shape_type.get() != "text":
             self.shape_text.set("")
     
+    def select_shape(self, shape_data, event):
+        """Select a shape and remember which arrows/lines are attached to it,
+        so they follow when the shape is dragged."""
+        self.selected_shape = shape_data
+        self.drag_data["x"] = event.x
+        self.drag_data["y"] = event.y
+        attached = []
+        if shape_data["type"] in NODE_TYPES:
+            nodes = self.node_shapes()
+            ids = list(range(len(nodes)))
+            me = nodes.index(shape_data)
+            for conn in self.shapes:
+                if conn["type"] in CONNECTOR_TYPES and not conn.get("preview"):
+                    for end in ("1", "2"):
+                        if self.find_node_at_point(conn["x" + end], conn["y" + end], nodes, ids) == me:
+                            attached.append((conn, end))
+        self.drag_data["attached"] = attached
+        self.highlight_shape(shape_data)
+
+    def node_shapes(self):
+        return [s for s in self.shapes if s["type"] in NODE_TYPES and not s.get("preview")]
+
+    def style_part(self, shape, part, highlighted):
+        """Set one canvas item's colour/width. Each Tk item type has its own
+        options (a line has no -outline, for example), so handle them apart."""
+        color = "#e74c3c" if highlighted else shape["color"]
+        kind = self.canvas.type(part)
+        if kind == "text":
+            # labels inside shapes are black; free text uses its own colour
+            self.canvas.itemconfig(part, fill=color if (highlighted or shape["type"] == "text") else "black")
+        elif kind == "line":
+            self.canvas.itemconfig(part, fill=color, width=3 if highlighted else 2)
+        elif kind == "polygon" and shape["type"] == "arrow":
+            self.canvas.itemconfig(part, fill=color, outline=color)  # arrowhead
+        else:
+            self.canvas.itemconfig(part, outline=color, width=3 if highlighted else 2)
+
     def highlight_shape(self, shape_data):
         """Highlight selected shape"""
         self.clear_highlight()
         for part in shape_data["parts"]:
-            if self.canvas.type(part) != "text":
-                self.canvas.itemconfig(part, width=3)
-                self.canvas.itemconfig(part, outline="#e74c3c")
-            else:
-                # Highlight text with a background
-                self.canvas.itemconfig(part, fill="#e74c3c")
-    
+            self.style_part(shape_data, part, True)
+
     def clear_highlight(self):
         """Clear all highlights"""
         for shape in self.shapes:
             for part in shape["parts"]:
-                if self.canvas.type(part) != "text":
-                    self.canvas.itemconfig(part, width=2)
-                    self.canvas.itemconfig(part, outline=shape["color"])
-                else:
-                    self.canvas.itemconfig(part, fill=shape["color"])
-    
-    def create_shape(self, shape_type, x1, y1, x2, y2, color, text="", preview=False):
+                self.style_part(shape, part, False)
+
+    def redraw_shape(self, shape):
+        """Recreate a shape's canvas items from its stored coordinates."""
+        for part in shape["parts"]:
+            self.canvas.delete(part)
+        fresh = self.create_shape(shape["type"], shape["x1"], shape["y1"], shape["x2"], shape["y2"],
+                                  shape["color"], shape.get("text", ""), keep_id=True)
+        shape["parts"] = fresh["parts"] if fresh else []
+
+    def create_shape(self, shape_type, x1, y1, x2, y2, color, text="", preview=False, keep_id=False):
         """Create a shape on the canvas and return its data"""
         # Lines and arrows are directional — (x1,y1) must stay the true drag
         # start and (x2,y2) the true drag end, or the arrowhead ends up
@@ -429,8 +474,9 @@ class DiagramApp:
             "preview": preview,
             "parts": []
         }
-        self.next_id += 1
-        
+        if not keep_id:
+            self.next_id += 1
+
         # Calculate center and dimensions
         cx = (x1 + x2) / 2
         cy = (y1 + y2) / 2
@@ -449,6 +495,7 @@ class DiagramApp:
                 
         elif shape_type == "square":
             size = max(w, h)
+            shape_data.update(x2=x1 + size, y2=y1 + size)  # store what is actually drawn
             id = self.canvas.create_rectangle(x1, y1, x1 + size, y1 + size, outline=color, width=2, fill=fill_color)
             shape_data["parts"].append(id)
             if text:
@@ -457,6 +504,7 @@ class DiagramApp:
                 
         elif shape_type == "circle":
             r = max(w, h) / 2
+            shape_data.update(x1=cx - r, y1=cy - r, x2=cx + r, y2=cy + r)  # store what is actually drawn
             id = self.canvas.create_oval(cx - r, cy - r, cx + r, cy + r, outline=color, width=2, fill=fill_color)
             shape_data["parts"].append(id)
             if text:
@@ -506,11 +554,11 @@ class DiagramApp:
         elif shape_type == "text":
             id = self.canvas.create_text(x1, y1, text=text or "Text", font=("Arial", 12), fill=color)
             shape_data["parts"].append(id)
-            # Store text position
-            shape_data["x1"] = x1
-            shape_data["y1"] = y1
-            shape_data["x2"] = x1 + 50
-            shape_data["y2"] = y1 + 20
+            # The text is drawn CENTRED on (x1, y1); keep that anchor so a
+            # redraw/import puts it back in the same place, and keep its real
+            # on-screen extent separately for hit-testing.
+            shape_data["x2"], shape_data["y2"] = x1, y1
+            shape_data["bbox"] = self.canvas.bbox(id)
         
         return shape_data if shape_data["parts"] else None
     
@@ -527,7 +575,16 @@ class DiagramApp:
             "#1abc9c": "#d1f2eb",
             "#2c3e50": "#d5d8dc"
         }
-        return color_map.get(color, "#ecf0f1")
+        if color in color_map:
+            return color_map[color]
+        h = color.lstrip("#")
+        if len(h) == 6:
+            try:
+                rgb = [int(h[i:i + 2], 16) for i in (0, 2, 4)]
+                return "#" + "".join(f"{int(v + (255 - v) * 0.8):02x}" for v in rgb)
+            except ValueError:
+                pass
+        return "#ecf0f1"
     
     def on_shape_double_click(self, event):
         """Double click on shape to edit text"""
@@ -614,86 +671,133 @@ class DiagramApp:
             return best_id
         return None
 
+    @staticmethod
+    def mermaid_label(text):
+        """Make a label safe inside Mermaid's double quotes."""
+        return text.replace('"', "#quot;").replace("\n", "<br/>").strip()
+
+    def text_bbox(self, shape):
+        """On-screen extent of a free text item (it is drawn centred on x1/y1)."""
+        box = self.canvas.bbox(shape["parts"][0]) if shape["parts"] else None
+        return box or (shape["x1"] - 25, shape["y1"] - 10, shape["x1"] + 25, shape["y1"] + 10)
+
+    @staticmethod
+    def point_segment_distance(px, py, x1, y1, x2, y2):
+        dx, dy = x2 - x1, y2 - y1
+        if dx == 0 and dy == 0:
+            return math.hypot(px - x1, py - y1)
+        t = max(0.0, min(1.0, ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)))
+        return math.hypot(px - (x1 + t * dx), py - (y1 + t * dy))
+
+    def build_mermaid(self, shapes):
+        """Turn the drawn shapes into Mermaid code.
+
+        Returns (code, node_count, edge_count, skipped_connectors).
+
+        - Boxes/circles/diamonds become nodes.
+        - Arrows/lines become edges between the nodes at their two ends.
+        - A free text placed inside a node that has no label becomes that
+          node's label; a free text placed on/next to an arrow or line becomes
+          that edge's label; any other free text becomes a borderless note.
+        - Direction (TD or LR) follows how the arrows were actually drawn.
+        - Node colours match the canvas: light fill, coloured border, dark text.
+        """
+        node_shapes = [s for s in shapes if s["type"] in NODE_TYPES]
+        connector_shapes = [s for s in shapes if s["type"] in CONNECTOR_TYPES]
+        text_shapes = [s for s in shapes if s["type"] == "text"]
+        labels = {id(s): s.get("text", "") for s in node_shapes}
+        edge_labels = {}
+        notes = []
+
+        for t in text_shapes:
+            tx1, ty1, tx2, ty2 = self.text_bbox(t)
+            cx, cy = (tx1 + tx2) / 2, (ty1 + ty2) / 2
+            # 1) inside a node -> that node's label (if it has none yet)
+            host = next((n for n in node_shapes
+                         if n["x1"] <= cx <= n["x2"] and n["y1"] <= cy <= n["y2"]), None)
+            if host is not None and not labels[id(host)]:
+                labels[id(host)] = t.get("text", "")
+                continue
+            # 2) on or next to a connector -> that edge's label
+            near = [(self.point_segment_distance(cx, cy, c["x1"], c["y1"], c["x2"], c["y2"]), c)
+                    for c in connector_shapes if id(c) not in edge_labels]
+            if near:
+                dist, conn = min(near, key=lambda d: d[0])
+                if dist <= 30:
+                    edge_labels[id(conn)] = t.get("text", "")
+                    continue
+            notes.append(t)
+
+        all_nodes = node_shapes + notes
+        node_ids = [f"N{i + 1}" for i in range(len(all_nodes))]
+
+        # connections
+        edges, skipped = [], 0
+        sum_dx = sum_dy = 0.0
+        for c in connector_shapes:
+            a = self.find_node_at_point(c["x1"], c["y1"], node_shapes, node_ids)
+            b = self.find_node_at_point(c["x2"], c["y2"], node_shapes, node_ids)
+            if not (a and b and a != b):
+                skipped += 1
+                continue
+            sum_dx += abs(c["x2"] - c["x1"])
+            sum_dy += abs(c["y2"] - c["y1"])
+            link = "-->" if c["type"] == "arrow" else "---"
+            label = edge_labels.get(id(c))
+            if label:
+                link += f'|"{self.mermaid_label(label)}"|'
+            edges.append(f"    {a} {link} {b}")
+
+        direction = "LR" if sum_dx > sum_dy else "TD"
+        lines = [f"```mermaid", f"graph {direction}"]
+        for n, nid in zip(all_nodes, node_ids):
+            if n["type"] == "text":
+                text = self.mermaid_label(n.get("text") or "Text")
+                lines.append(f'    {nid}["{text}"]')
+                continue
+            text = self.mermaid_label(labels[id(n)] or f"Node{nid[1:]}")
+            if n["type"] in ("rectangle", "square"):
+                lines.append(f'    {nid}["{text}"]')
+            elif n["type"] == "circle":
+                lines.append(f'    {nid}(("{text}"))')
+            elif n["type"] == "ellipse":
+                lines.append(f'    {nid}(["{text}"])')
+            else:  # diamond
+                lines.append(f'    {nid}{{"{text}"}}')
+
+        # Explicit per-node colours, so the diagram looks the same in light-
+        # and dark-themed viewers and matches what was drawn on the canvas.
+        lines.append("")
+        lines.append("    %% Colors")
+        for n, nid in zip(all_nodes, node_ids):
+            color = n.get("color") or "#3498db"
+            if n["type"] == "text":
+                lines.append(f"    style {nid} fill:none,stroke:none,color:{color}")
+            else:
+                fill = self.lighten_color(color)
+                lines.append(f"    style {nid} fill:{fill},stroke:{color},stroke-width:2px,"
+                             f"color:{self.contrast_text_color(fill)}")
+
+        if edges:
+            lines.append("")
+            lines.append("    %% Connections")
+            lines.extend(edges)
+        lines.append("```")
+        return "\n".join(lines), len(all_nodes), len(edges), skipped
+
     def generate_mermaid(self):
         """Generate Mermaid code from shapes"""
-        # Remove preview shapes
         shapes = [s for s in self.shapes if not s.get("preview", False)]
-
-        if not shapes:
-            self.mermaid_text.delete(1.0, tk.END)
-            self.mermaid_text.insert(1.0, "# No shapes to convert\n# Draw shapes on the canvas to generate Mermaid code")
-            return
-
-        # Lines/arrows are CONNECTORS, not diagram nodes — keep them separate
-        node_shapes = [s for s in shapes if s["type"] not in ("line", "arrow")]
-        connector_shapes = [s for s in shapes if s["type"] in ("line", "arrow")]
-
-        if not node_shapes:
+        if not any(s["type"] not in CONNECTOR_TYPES for s in shapes):
             self.mermaid_text.delete(1.0, tk.END)
             self.mermaid_text.insert(1.0, "# No shapes to convert\n# Draw a box/circle/etc. (not just arrows) to generate Mermaid code")
             return
 
-        # Build Mermaid code
-        mermaid_code = "```mermaid\ngraph TD\n"
-        mermaid_code += "    %% Auto-generated diagram\n"
-
-        # Create nodes
-        node_ids = []
-        for i, shape in enumerate(node_shapes):
-            shape_type = shape["type"]
-            text = shape.get("text") or f"Node{i+1}"
-            node_id = f"N{i+1}"
-
-            # Sanitize text for Mermaid
-            text = text.replace('"', "'").replace('\n', ' ')
-
-            if shape_type in ["rectangle", "square"]:
-                mermaid_code += f"    {node_id}[\"{text}\"]\n"
-            elif shape_type in ["circle", "ellipse"]:
-                mermaid_code += f"    {node_id}(\"{text}\")\n"
-            elif shape_type == "diamond":
-                mermaid_code += f"    {node_id}{{\"{text}\"}}\n"
-            else:  # text
-                mermaid_code += f"    {node_id}[\"{text}\"]\n"
-
-            node_ids.append(node_id)
-
-        # Explicit per-node colors — without this, Mermaid falls back to
-        # the viewer's default theme, which is exactly why nodes can look
-        # like "empty boxes" under a dark-mode renderer (default text color
-        # ends up with poor/no contrast against the default fill). Writing
-        # the fill AND a contrast-matched text color makes each node render
-        # consistently regardless of the surrounding theme.
-        if node_ids:
-            mermaid_code += "\n    %% Colors\n"
-            for shape, node_id in zip(node_shapes, node_ids):
-                fill = shape.get("color") or "#3498db"
-                text_color = self.contrast_text_color(fill)
-                mermaid_code += f"    style {node_id} fill:{fill},stroke:#2c3e50,stroke-width:2px,color:{text_color}\n"
-
-        # Connections come from where you actually drew arrows/lines,
-        # matched to whichever node shape sits at each endpoint.
-        edges = []
-        skipped = 0
-        for shape in connector_shapes:
-            start_id = self.find_node_at_point(shape["x1"], shape["y1"], node_shapes, node_ids)
-            end_id = self.find_node_at_point(shape["x2"], shape["y2"], node_shapes, node_ids)
-            if start_id and end_id and start_id != end_id:
-                arrow_syntax = "-->" if shape["type"] == "arrow" else "---"
-                edges.append(f"    {start_id} {arrow_syntax} {end_id}\n")
-            else:
-                skipped += 1
-
-        if edges:
-            mermaid_code += "\n    %% Connections\n"
-            mermaid_code += "".join(edges)
-
-        mermaid_code += "```"
-
+        code, n_nodes, n_edges, skipped = self.build_mermaid(shapes)
         self.mermaid_text.delete(1.0, tk.END)
-        self.mermaid_text.insert(1.0, mermaid_code)
+        self.mermaid_text.insert(1.0, code)
 
-        status = f"Mermaid code generated ({len(node_ids)} nodes, {len(edges)} connections)"
+        status = f"Mermaid code generated ({n_nodes} nodes, {n_edges} connections)"
         if skipped:
             status += f" — {skipped} arrow/line(s) not touching two shapes were skipped"
         self.status_bar.config(text=status)
@@ -711,17 +815,30 @@ class DiagramApp:
         """Open Mermaid code in browser"""
         code = self.mermaid_text.get(1.0, tk.END).strip()
         if code and "No shapes" not in code and code != "# No shapes to convert":
-            # Open in browser using Mermaid live editor
-            import urllib.parse
             # Just the mermaid code without the ``` markers
             mermaid_code = code.replace("```mermaid\n", "").replace("```", "").strip()
-            encoded = urllib.parse.quote(mermaid_code)
-            url = f"https://mermaid.live/edit#pako:{encoded}"
-            webbrowser.open(url)
+            webbrowser.open(self.mermaid_live_url(mermaid_code))
             self.status_bar.config(text="Opening Mermaid preview in browser...")
         else:
             messagebox.showinfo("No Code", "Generate Mermaid code first by drawing shapes")
     
+    @staticmethod
+    def mermaid_live_url(mermaid_code):
+        """Link that opens the diagram in the Mermaid Live Editor.
+
+        The editor's "#pako:" format is the editor state as JSON, zlib-
+        compressed and URL-safe base64 encoded (plain URL-encoded text after
+        "#pako:" is not understood and shows an error).
+        """
+        state = {
+            "code": mermaid_code,
+            "mermaid": json.dumps({"theme": "default"}),
+            "autoSync": True,
+            "updateDiagram": True,
+        }
+        packed = zlib.compress(json.dumps(state).encode("utf-8"), 9)
+        return "https://mermaid.live/edit#pako:" + base64.urlsafe_b64encode(packed).decode("ascii")
+
     def save_markdown(self):
         """Save diagram as markdown file with Mermaid code"""
         code = self.mermaid_text.get(1.0, tk.END).strip()

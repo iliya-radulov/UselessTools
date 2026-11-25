@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧵 String Art Pro · Real Size Export</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    body {
+      background: #12121f;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
+    }
+    .app {
+      max-width: 1400px;
+      width: 100%;
+      background: #1e1e32;
+      border-radius: 36px;
+      padding: 28px 32px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+      color: #ececf5;
+    }
+    h1 {
+      margin: 0 0 8px 0;
+      font-weight: 500;
+      font-size: 2.1rem;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #3d3d60;
+      padding-bottom: 18px;
+    }
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 30px;
+      margin-top: 20px;
+    }
+    @media (max-width: 880px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .canvas-wrapper {
+      background: #141425;
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: inset 0 0 0 1px #3a3a5a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    /* Square container capped by width, so the canvas can never be stretched
+       into an ellipse (v4 capped only the height, which distorted wide layouts). */
+    #canvas-container {
+      width: 100%;
+      max-width: 760px;
+      aspect-ratio: 1 / 1;
+      background: #0a0a16;
+      border-radius: 18px;
+      overflow: hidden;
+      position: relative;
+    }
+    #canvas-container canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .progress {
+      width: 100%;
+      max-width: 760px;
+      height: 6px;
+      background: #2a2a48;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    .progress > div {
+      height: 100%;
+      width: 0%;
+      background: #a29bfe;
+      transition: width 0.15s;
+    }
+    .upload-row {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .upload-row label {
+      background: #333355;
+      padding: 10px 22px;
+      border-radius: 40px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #5a5a80;
+      flex: 1 1 auto;
+    }
+    .upload-row label:hover {
+      background: #44446a;
+    }
+    .upload-row input[type="file"] {
+      display: none;
+    }
+    .btn {
+      background: #6c5ce7;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 40px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: 0.15s;
+      border: 1px solid #8a7af0;
+      flex: 1 1 auto;
+      text-align: center;
+    }
+    .btn:hover {
+      background: #7d6ff0;
+      transform: scale(0.97);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #6c5ce7;
+      color: #cbc4ff;
+    }
+    .btn-outline:hover {
+      background: #2f2f50;
+    }
+    .btn-pdf {
+      background: #2d7a5a;
+      border-color: #3e9a74;
+    }
+    .btn-pdf:hover {
+      background: #3a8f6a;
+    }
+    .btn-stop {
+      background: #8a3a4a;
+      border-color: #b04a5e;
+    }
+    .panel {
+      background: #1a1a30;
+      border-radius: 24px;
+      padding: 22px 20px;
+      box-shadow: inset 0 0 0 1px #3a3a5a;
+    }
+    .panel h3 {
+      margin: 0 0 18px 0;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      color: #b0b0d9;
+      border-bottom: 1px solid #333355;
+      padding-bottom: 12px;
+    }
+    .slider-group {
+      margin-bottom: 16px;
+    }
+    .slider-group label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: #cbc4ff;
+      margin-bottom: 4px;
+    }
+    .slider-group input[type="range"] {
+      width: 100%;
+      height: 6px;
+      background: #34345a;
+      border-radius: 10px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .slider-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #a29bfe;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 8px #6c5ce7;
+    }
+    .slider-group input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      background: #a29bfe;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+    }
+    .slider-group select {
+      width: 100%;
+      background: #262648;
+      color: #ececf5;
+      border: 1px solid #44446a;
+      border-radius: 10px;
+      padding: 6px 8px;
+    }
+    .hint {
+      font-size: 0.75rem;
+      color: #8a8ab8;
+      margin-top: 3px;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 12px 0 8px;
+      flex-wrap: wrap;
+    }
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      color: #d0d0f0;
+    }
+    .info-badge {
+      background: #262648;
+      border-radius: 40px;
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      color: #b0b0dd;
+      margin-top: 12px;
+      text-align: center;
+      width: 100%;
+    }
+    .flex-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #333355;
+      margin: 14px 0;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>🧵 String Art · Real Size Export</h1>
+  <div class="main-grid">
+    <!-- left: canvas -->
+    <div class="canvas-wrapper">
+      <div id="canvas-container">
+        <canvas id="stringCanvas" width="900" height="900"></canvas>
+      </div>
+      <div class="progress"><div id="progressBar"></div></div>
+      <div class="upload-row">
+        <label for="imageUpload">📁 Upload Image</label>
+        <input type="file" id="imageUpload" accept="image/*">
+        <button class="btn" id="renderBtn">⚡ Render</button>
+        <button class="btn btn-stop" id="stopBtn" disabled>⏹ Stop</button>
+        <button class="btn btn-outline" id="resetBtn">↺ Reset</button>
+      </div>
+      <div class="flex-row" style="width:100%;">
+        <button class="btn btn-pdf" id="pdfBtn" style="flex:2;">📄 Export PDF (Real Size)</button>
+        <button class="btn btn-outline" id="printBtn" style="flex:1;">🖨️ Print preview</button>
+      </div>
+      <div class="flex-row" style="width:100%;">
+        <button class="btn btn-outline" id="pathTxtBtn" style="flex:1;">🧾 Path as text</button>
+      </div>
+      <div class="info-badge" id="infoText">
+        ⬆️ Upload image · adjust pins/lines · set diameter & DPI for print
+      </div>
+    </div>
+
+    <!-- right: controls -->
+    <div class="panel">
+      <h3>⚙️ Thread & Image</h3>
+
+      <div class="slider-group">
+        <label>📍 Pins (max 500) <span id="pinsLabel">300</span></label>
+        <input type="range" id="pinsSlider" min="60" max="500" value="300" step="6">
+      </div>
+      <div class="slider-group">
+        <label>✏️ Lines (maximum) <span id="linesLabel">4000</span></label>
+        <input type="range" id="linesSlider" min="200" max="8000" value="4000" step="100">
+        <div class="hint">Stops earlier on its own once more thread would not improve the picture.</div>
+      </div>
+      <div class="slider-group">
+        <label>🧵 Thread thickness (mm) <span id="threadLabel">0.15</span></label>
+        <input type="range" id="threadSlider" min="0.05" max="1.00" value="0.15" step="0.01">
+        <div class="hint">Real thread diameter. Thinner thread → more lines, finer detail.</div>
+      </div>
+      <div class="slider-group">
+        <label>🎨 Thread / board</label>
+        <select id="colorSelect">
+          <option value="dark">Black thread on white board</option>
+          <option value="light">White thread on black board</option>
+        </select>
+      </div>
+      <div class="slider-group">
+        <label>🎯 Detail (calculation grid)</label>
+        <select id="qualitySelect">
+          <option value="300">Fast · 300 px</option>
+          <option value="400" selected>Normal · 400 px</option>
+          <option value="560">High · 560 px (slower)</option>
+        </select>
+      </div>
+
+      <hr>
+
+      <div class="slider-group">
+        <label>🔆 Contrast <span id="contrastLabel">1.20</span></label>
+        <input type="range" id="contrastSlider" min="0.5" max="2.0" value="1.2" step="0.05">
+      </div>
+      <div class="slider-group">
+        <label>🔎 Sharpness <span id="sharpnessLabel">1.0</span></label>
+        <input type="range" id="sharpnessSlider" min="0.5" max="2.0" value="1.0" step="0.1">
+      </div>
+
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="bgRemoveCheck"> 🧽 Remove background (white)</label>
+        <label><input type="checkbox" id="showPinNumbers" checked> 🔢 Show pin numbers</label>
+      </div>
+
+      <hr>
+
+      <!-- physical parameters for print -->
+      <div class="slider-group">
+        <label>📐 Diameter (cm) <span id="diameterLabel">30</span></label>
+        <input type="range" id="diameterSlider" min="20" max="40" value="30" step="1">
+      </div>
+      <div class="slider-group">
+        <label>🖨️ DPI (print) <span id="dpiLabel">300</span></label>
+        <input type="range" id="dpiSlider" min="150" max="300" value="300" step="50">
+      </div>
+      <div class="slider-group">
+        <label>📏 Export pixels (approx) <span id="exportPxLabel">3543</span></label>
+      </div>
+      <div class="slider-group">
+        <label>🖥️ Preview canvas px <span id="sizeLabel">900</span></label>
+        <input type="range" id="sizeSlider" min="600" max="2400" value="900" step="60">
+        <div class="hint">Display only: changing it redraws, it does not recompute.</div>
+      </div>
+
+      <div class="flex-row">
+        <button class="btn btn-outline" id="resetFiltersBtn" style="flex:1;">↺ Image filters</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- jsPDF only — we build the PDF directly from our own canvas, no DOM screenshot needed -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<!--
+  The solver lives in its own <script> so the SAME source text can be run
+  inside a Web Worker (keeps the page responsive) or, if a browser refuses
+  to start a worker from a local file, directly on the page as a fallback.
+-->
+<script id="solverSource">
+  // ---------- string-art solver (pure, no DOM) ----------
+  //
+  // target[i]  : how much thread darkness pixel i should end up with, 0..1
+  //              (for "white thread on black board" it is how BRIGHT it
+  //              should end up — the maths is identical).
+  // simulated  : what the board looks like so far, same 0..1 scale.
+  //
+  // Thread is modelled the way it really behaves: each line covers a
+  // fraction `alpha * coverage` of every pixel it crosses, and overlapping
+  // threads combine like layers of semi-transparent ink:
+  //     d' = d + (1 - d) * alpha * coverage
+  // alpha = thread thickness / pixel size, so with a 0.15 mm thread on a
+  // 30 cm hoop at a 400 px grid (0.75 mm per pixel) one line darkens a
+  // pixel by a fifth. The preview is drawn with exactly the same
+  // model (see drawStringArt), so what the solver optimises is what you see.
+  //
+  // Each step picks the next pin whose line most reduces the squared error
+  // between simulated and target, never reusing a chord (no back-and-forth
+  // stringing between the same two pins), and stops on its own once no line
+  // improves the picture.
+  //
+  // Lines are traced with Xiaolin Wu's anti-aliased algorithm; traced lines
+  // are cached per pin pair up to a memory budget.
+  function* stringArtSolve(params) {
+    const { target, size, pins, maxLines, alpha } = params;
+    const N = size;
+    const simulated = new Float32Array(N * N);
+
+    const c = (N - 1) / 2, r = (N - 1) / 2 - 0.5;
+    const px = new Float64Array(pins), py = new Float64Array(pins);
+    for (let i = 0; i < pins; i++) {
+      const a = (i / pins) * 2 * Math.PI - Math.PI / 2;
+      px[i] = c + r * Math.cos(a);
+      py[i] = c + r * Math.sin(a);
+    }
+
+    function trace(a, b) {
+      let x0 = px[a], y0 = py[a], x1 = px[b], y1 = py[b];
+      const idx = [], cov = [];
+      const steep = Math.abs(y1 - y0) > Math.abs(x1 - x0);
+      if (steep) { [x0, y0] = [y0, x0]; [x1, y1] = [y1, x1]; }
+      if (x0 > x1) { [x0, x1] = [x1, x0]; [y0, y1] = [y1, y0]; }
+      const g = (x1 - x0) === 0 ? 1 : (y1 - y0) / (x1 - x0);
+      const put = (x, y, v) => {
+        if (v <= 0.004) return;
+        const X = steep ? y : x, Y = steep ? x : y;
+        if (X >= 0 && X < N && Y >= 0 && Y < N) { idx.push(Y * N + X); cov.push(v); }
+      };
+      const xs = Math.round(x0), xe = Math.round(x1);
+      let yy = y0 + g * (xs - x0);
+      for (let x = xs; x <= xe; x++) {
+        const ip = Math.floor(yy), f = yy - ip;
+        put(x, ip, 1 - f);
+        put(x, ip + 1, f);
+        yy += g;
+      }
+      return { idx: Int32Array.from(idx), cov: Float32Array.from(cov) };
+    }
+
+    const cache = new Array(pins * pins);
+    let cached = 0;
+    const CACHE_BUDGET = 14e6; // traced pixels kept in memory (~110 MB at most)
+    function getPath(a, b) {
+      const k = a < b ? a * pins + b : b * pins + a;
+      let p = cache[k];
+      if (p) return p;
+      p = a < b ? trace(a, b) : trace(b, a);
+      if (cached + p.idx.length <= CACHE_BUDGET) { cache[k] = p; cached += p.idx.length; }
+      return p;
+    }
+
+    const used = new Uint8Array(pins * pins);
+    const minSkip = Math.max(3, Math.round(pins / 20)); // skip near-neighbour chords
+    const sequence = [0];
+    let current = 0, stoppedEarly = false, reported = 0;
+    const REPORT_EVERY = 25;
+
+    for (let l = 0; l < maxLines; l++) {
+      let best = -1, bestScore = 0, bestPath = null;
+      for (let cand = 0; cand < pins; cand++) {
+        let d = Math.abs(cand - current); d = Math.min(d, pins - d);
+        if (d < minSkip || used[current * pins + cand]) continue;
+        const p = getPath(current, cand);
+        const ii = p.idx, cc = p.cov;
+        let score = 0;
+        for (let k = 0; k < ii.length; k++) {
+          const i = ii[k];
+          const s = simulated[i], t = target[i];
+          const e1 = t - s;
+          const e2 = e1 - (1 - s) * alpha * cc[k];
+          score += e1 * e1 - e2 * e2;
+        }
+        if (score > bestScore) { bestScore = score; best = cand; bestPath = p; }
+      }
+      if (best < 0) { stoppedEarly = true; break; } // nothing improves the picture any more
+
+      const ii = bestPath.idx, cc = bestPath.cov;
+      for (let k = 0; k < ii.length; k++) {
+        const i = ii[k];
+        simulated[i] += (1 - simulated[i]) * alpha * cc[k];
+      }
+      used[current * pins + best] = 1;
+      used[best * pins + current] = 1;
+      sequence.push(best);
+      current = best;
+
+      if (sequence.length - 1 - reported >= REPORT_EVERY) {
+        yield { type: 'progress', newPins: sequence.slice(reported + 1), lines: sequence.length - 1 };
+        reported = sequence.length - 1;
+      }
+    }
+    return { type: 'done', sequence, stoppedEarly, newPins: sequence.slice(reported + 1) };
+  }
+
+  // Worker entry point (ignored when this script runs on the page itself).
+  if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
+    self.onmessage = (e) => {
+      const it = stringArtSolve(e.data);
+      for (;;) {
+        const r = it.next();
+        self.postMessage(r.value);
+        if (r.done) break;
+      }
+    };
+  }
+</script>
+
+<script>
+  (function() {
+    // ---------- DOM refs ----------
+    const $ = (id) => document.getElementById(id);
+    const canvas = $('stringCanvas');
+    const sizeSlider = $('sizeSlider'), sizeLabel = $('sizeLabel');
+    const pinsSlider = $('pinsSlider'), pinsLabel = $('pinsLabel');
+    const linesSlider = $('linesSlider'), linesLabel = $('linesLabel');
+    const threadSlider = $('threadSlider'), threadLabel = $('threadLabel');
+    const colorSelect = $('colorSelect'), qualitySelect = $('qualitySelect');
+    const contrastSlider = $('contrastSlider'), contrastLabel = $('contrastLabel');
+    const sharpnessSlider = $('sharpnessSlider'), sharpnessLabel = $('sharpnessLabel');
+    const bgRemoveCheck = $('bgRemoveCheck'), showPinNumbersCheck = $('showPinNumbers');
+    const fileInput = $('imageUpload');
+    const renderBtn = $('renderBtn'), stopBtn = $('stopBtn'), resetBtn = $('resetBtn');
+    const resetFiltersBtn = $('resetFiltersBtn');
+    const pdfBtn = $('pdfBtn'), printBtn = $('printBtn'), pathTxtBtn = $('pathTxtBtn');
+    const infoText = $('infoText'), progressBar = $('progressBar');
+    const diameterSlider = $('diameterSlider'), diameterLabel = $('diameterLabel');
+    const dpiSlider = $('dpiSlider'), dpiLabel = $('dpiLabel');
+    const exportPxLabel = $('exportPxLabel');
+
+    // ---------- state ----------
+    // sourceImage: the uploaded photo, centre-cropped to a square once at upload time.
+    let sourceImage = null;
+    // The pin sequence and the settings it was computed with. Preview, PDF and
+    // text export all use this, so they always match.
+    let result = null; // { sequence, pins, threadMm, diameterCm, mode, stoppedEarly, requested }
+
+    const SOURCE_WORK_SIZE = 1000;
+    const RING = 0.86; // circle radius as a fraction of half the canvas (room for pin numbers)
+
+    function settings() {
+      return {
+        pins: parseInt(pinsSlider.value, 10),
+        lines: parseInt(linesSlider.value, 10),
+        threadMm: parseFloat(threadSlider.value),
+        mode: colorSelect.value,
+        calcSize: parseInt(qualitySelect.value, 10),
+        contrast: parseFloat(contrastSlider.value),
+        sharpness: parseFloat(sharpnessSlider.value),
+        bgRemove: bgRemoveCheck.checked,
+        showNumbers: showPinNumbersCheck.checked,
+        diameterCm: parseFloat(diameterSlider.value),
+        dpi: parseInt(dpiSlider.value, 10),
+        previewSize: parseInt(sizeSlider.value, 10),
+      };
+    }
+
+    function getExportSizePx() {
+      const s = settings();
+      return Math.round(s.diameterCm / 2.54 * s.dpi / RING); // whole canvas, so the circle itself is diameterCm
+    }
+
+    function updateLabels() {
+      sizeLabel.textContent = sizeSlider.value;
+      pinsLabel.textContent = pinsSlider.value;
+      linesLabel.textContent = linesSlider.value;
+      threadLabel.textContent = parseFloat(threadSlider.value).toFixed(2);
+      contrastLabel.textContent = parseFloat(contrastSlider.value).toFixed(2);
+      sharpnessLabel.textContent = parseFloat(sharpnessSlider.value).toFixed(1);
+      diameterLabel.textContent = diameterSlider.value;
+      dpiLabel.textContent = dpiSlider.value;
+      exportPxLabel.textContent = getExportSizePx().toString();
+    }
+
+    function drawPlaceholder() {
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#0a0a16';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#5f5f8a';
+      ctx.font = `${Math.round(canvas.width / 40)}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🖼️ Upload image', canvas.width / 2, canvas.height / 2 - 24);
+      ctx.font = `${Math.round(canvas.width / 56)}px system-ui, sans-serif`;
+      ctx.fillStyle = '#7a7aa0';
+      ctx.fillText('Adjust pins/lines · set diameter & DPI', canvas.width / 2, canvas.height / 2 + 30);
+    }
+
+    // ---------- image preparation ----------
+    function clamp8(v) { return v < 0 ? 0 : v > 255 ? 255 : v; }
+
+    function resizeImageData(imgData, n) {
+      const off = document.createElement('canvas');
+      off.width = imgData.width; off.height = imgData.height;
+      off.getContext('2d').putImageData(imgData, 0, 0);
+      const t = document.createElement('canvas');
+      t.width = n; t.height = n;
+      const tctx = t.getContext('2d');
+      tctx.imageSmoothingQuality = 'high';
+      tctx.drawImage(off, 0, 0, n, n);
+      return tctx.getImageData(0, 0, n, n);
+    }
+
+    // Returns the solver target (0..1 per pixel) at n×n.
+    function buildTarget(n, s) {
+      const img = resizeImageData(sourceImage, n).data;
+      let lum = new Float32Array(n * n);
+      for (let i = 0, p = 0; p < lum.length; i += 4, p++) {
+        // transparent pixels (e.g. PNG background) count as white
+        const a = img[i + 3] / 255;
+        const y = 0.299 * img[i] + 0.587 * img[i + 1] + 0.114 * img[i + 2];
+        lum[p] = y * a + 255 * (1 - a);
+      }
+      if (s.bgRemove) {
+        // near-white becomes pure white = no thread there
+        for (let p = 0; p < lum.length; p++) if (lum[p] > 230) lum[p] = 255;
+      }
+      for (let p = 0; p < lum.length; p++) lum[p] = clamp8(128 + (lum[p] - 128) * s.contrast);
+      if (s.sharpness !== 1.0) {
+        // unsharp mask: original + k * (original - 3×3 blur)
+        const k = s.sharpness - 1.0;
+        const out = new Float32Array(lum.length);
+        for (let y = 0; y < n; y++) {
+          for (let x = 0; x < n; x++) {
+            let sum = 0, cnt = 0;
+            for (let dy = -1; dy <= 1; dy++) {
+              const yy = y + dy; if (yy < 0 || yy >= n) continue;
+              for (let dx = -1; dx <= 1; dx++) {
+                const xx = x + dx; if (xx < 0 || xx >= n) continue;
+                sum += lum[yy * n + xx]; cnt++;
+              }
+            }
+            const v = lum[y * n + x];
+            out[y * n + x] = clamp8(v + k * (v - sum / cnt));
+          }
+        }
+        lum = out;
+      }
+      const target = new Float32Array(n * n);
+      const dark = s.mode === 'dark';
+      for (let p = 0; p < lum.length; p++) target[p] = dark ? 1 - lum[p] / 255 : lum[p] / 255;
+      return target;
+    }
+
+    // ---------- drawing ----------
+    // Draws `sequence` onto any canvas size with the same thread model the
+    // solver uses: the thread's real width in pixels (from its thickness in mm
+    // and the hoop diameter). Thinner-than-a-pixel thread is drawn 1 px wide at
+    // proportional opacity. Each segment is stroked separately so overlaps
+    // build up darkness like real thread does.
+    function geometry(size, pins) {
+      const half = size / 2, radius = half * RING;
+      const pts = [];
+      for (let i = 0; i < pins; i++) {
+        const a = (i / pins) * 2 * Math.PI - Math.PI / 2;
+        pts.push({ x: half + radius * Math.cos(a), y: half + radius * Math.sin(a), a });
+      }
+      return { half, radius, pts };
+    }
+    function colors(mode) {
+      return mode === 'dark'
+        ? { board: '#f7f4ec', thread: '#141414', pin: '#9a9a9a', label: '#555' }
+        : { board: '#0d0d16', thread: '#f2ead0', pin: '#7a7468', label: '#b8a87a' };
+    }
+    function threadStyle(size, r) {
+      const pxPerMm = (size * RING) / (r.diameterCm * 10);
+      const w = r.threadMm * pxPerMm;
+      return w < 1 ? { width: 1, alpha: w } : { width: w, alpha: 1 };
+    }
+
+    function drawBoard(target, r) {
+      const ctx = target.getContext('2d');
+      const size = target.width;
+      const { half, radius } = geometry(size, r.pins);
+      const col = colors(r.mode);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = col.board === '#f7f4ec' ? '#ffffff' : '#08080f';
+      ctx.fillRect(0, 0, size, size);
+      ctx.beginPath();
+      ctx.arc(half, half, radius, 0, 2 * Math.PI);
+      ctx.fillStyle = col.board;
+      ctx.fill();
+    }
+
+    function drawSegments(target, r, from, to) {
+      const ctx = target.getContext('2d');
+      const { pts } = geometry(target.width, r.pins);
+      const st = threadStyle(target.width, r);
+      ctx.strokeStyle = colors(r.mode).thread;
+      ctx.lineWidth = st.width;
+      ctx.globalAlpha = st.alpha;
+      ctx.lineCap = 'round';
+      const seq = r.sequence;
+      for (let i = Math.max(1, from); i < to; i++) {
+        const a = pts[seq[i - 1]], b = pts[seq[i]];
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawPins(target, r, showNums) {
+      const ctx = target.getContext('2d');
+      const size = target.width;
+      const { half, radius, pts } = geometry(size, r.pins);
+      const col = colors(r.mode);
+      const dot = Math.max(1.5, size / 450);
+      ctx.fillStyle = col.pin;
+      for (const p of pts) { ctx.beginPath(); ctx.arc(p.x, p.y, dot, 0, 2 * Math.PI); ctx.fill(); }
+      if (!showNums) return;
+      // font shrinks with pin count so labels don't overlap; every label is
+      // drawn when it fits, otherwise every 2nd/5th/10th pin
+      const spacing = (2 * Math.PI * (radius + size * 0.04)) / r.pins;
+      const fontPx = Math.max(7, Math.min(size / 60, spacing * 0.8));
+      const charW = fontPx * 0.6 * String(r.pins).length;
+      const step = [1, 2, 5, 10].find(k => spacing * k > charW * 1.1) || 10;
+      ctx.font = `${fontPx}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = col.label;
+      const lr = radius + size * 0.04;
+      for (let i = 0; i < pts.length; i += step) {
+        ctx.fillText(i + 1, half + lr * Math.cos(pts[i].a), half + lr * Math.sin(pts[i].a));
+      }
+    }
+
+    function drawAll(target, r, showNums) {
+      drawBoard(target, r);
+      drawSegments(target, r, 1, r.sequence.length);
+      drawPins(target, r, showNums);
+    }
+
+    function redrawPreview() {
+      const s = settings();
+      canvas.width = canvas.height = s.previewSize;
+      if (result) drawAll(canvas, result, s.showNumbers);
+      else drawPlaceholder();
+    }
+
+    // ---------- running the solver ----------
+    let worker = null, workerUrl = null, workerBroken = false;
+    let job = null; // { cancel() }
+
+    function getWorker() {
+      if (workerBroken) return null;
+      try {
+        if (!workerUrl) {
+          const src = document.getElementById('solverSource').textContent;
+          workerUrl = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+        }
+        return new Worker(workerUrl);
+      } catch (e) {
+        workerBroken = true; // e.g. a browser that blocks workers on file:// pages
+        return null;
+      }
+    }
+
+    function setBusy(busy) {
+      [pdfBtn, pathTxtBtn, printBtn].forEach(b => { b.disabled = busy; });
+      stopBtn.disabled = !busy;
+    }
+
+    function stopJob() {
+      if (job) { job.cancel(); job = null; }
+      setBusy(false);
+    }
+
+    function render() {
+      if (!sourceImage) { infoText.textContent = '⚠️ Please upload an image first.'; return; }
+      stopJob();
+      const s = settings();
+      const pxMm = (s.diameterCm * 10) / s.calcSize;           // size of one grid pixel in mm
+      const alpha = Math.min(1, s.threadMm / pxMm);              // share of a pixel one thread covers
+      const params = { target: buildTarget(s.calcSize, s), size: s.calcSize, pins: s.pins, maxLines: s.lines, alpha };
+
+      const r = { sequence: [0], pins: s.pins, threadMm: s.threadMm, diameterCm: s.diameterCm,
+                  mode: s.mode, stoppedEarly: false, requested: s.lines, done: false };
+      result = r;
+      canvas.width = canvas.height = s.previewSize;
+      drawBoard(canvas, r);
+      setBusy(true);
+      progressBar.style.width = '0%';
+      const t0 = performance.now();
+
+      const onMessage = (msg) => {
+        if (result !== r) return; // a newer render replaced this one
+        const before = r.sequence.length;
+        if (msg.newPins && msg.newPins.length) r.sequence.push(...msg.newPins);
+        drawSegments(canvas, r, before, r.sequence.length);
+        const lines = r.sequence.length - 1;
+        progressBar.style.width = `${Math.min(100, 100 * lines / s.lines)}%`;
+        if (msg.type === 'progress') {
+          infoText.textContent = `⏳ Computing… ${lines} lines`;
+          return;
+        }
+        r.stoppedEarly = msg.stoppedEarly;
+        r.done = true;
+        progressBar.style.width = '100%';
+        drawAll(canvas, r, settings().showNumbers);
+        job = null;
+        setBusy(false);
+        const secs = ((performance.now() - t0) / 1000).toFixed(1);
+        infoText.textContent =
+          `✨ Done · ${r.pins} pins · ${lines} lines`
+          + (r.stoppedEarly ? ` (stopped on its own, ${r.requested} allowed)` : ` (limit reached — raise Lines for more)`)
+          + ` · ${secs}s · thread ≈ ${threadLengthM(r).toFixed(0)} m`;
+      };
+
+      const w = getWorker();
+      if (w) {
+        w.onmessage = (e) => onMessage(e.data);
+        w.onerror = () => { w.terminate(); workerBroken = true; if (result === r) render(); };
+        w.postMessage(params, [params.target.buffer]);
+        job = { cancel: () => w.terminate() };
+      } else {
+        // fallback: run on the page in small slices
+        const it = stringArtSolve(params);
+        let cancelled = false;
+        job = { cancel: () => { cancelled = true; } };
+        const step = () => {
+          if (cancelled) return;
+          const tEnd = performance.now() + 30;
+          let rr;
+          do { rr = it.next(); onMessage(rr.value); } while (!rr.done && performance.now() < tEnd);
+          if (!rr.done) setTimeout(step, 0);
+        };
+        step();
+      }
+    }
+
+    function stopped() {
+      // keep whatever was computed so far as the result
+      if (!job || !result) return;
+      stopJob();
+      result.done = true;
+      drawAll(canvas, result, settings().showNumbers);
+      infoText.textContent = `⏹ Stopped · ${result.sequence.length - 1} lines kept`;
+    }
+
+    function threadLengthM(r) {
+      const { pts } = geometry(1, r.pins);
+      let len = 0;
+      for (let i = 1; i < r.sequence.length; i++) {
+        const a = pts[r.sequence[i - 1]], b = pts[r.sequence[i]];
+        len += Math.hypot(a.x - b.x, a.y - b.y);
+      }
+      // geometry(1) has circle diameter RING
+      return len / RING * r.diameterCm / 100;
+    }
+
+    // Re-render automatically after a setting that changes the pattern,
+    // with a short delay so dragging a slider doesn't start many runs.
+    let renderTimer = null;
+    function scheduleRender() {
+      updateLabels();
+      if (!sourceImage) return;
+      clearTimeout(renderTimer);
+      renderTimer = setTimeout(render, 250);
+    }
+
+    // ---------- load image (centre crop to square) ----------
+    function loadImage(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const side = Math.min(img.naturalWidth, img.naturalHeight);
+          const sx = (img.naturalWidth - side) / 2, sy = (img.naturalHeight - side) / 2;
+          const off = document.createElement('canvas');
+          off.width = off.height = SOURCE_WORK_SIZE;
+          const octx = off.getContext('2d');
+          octx.imageSmoothingQuality = 'high';
+          octx.drawImage(img, sx, sy, side, side, 0, 0, SOURCE_WORK_SIZE, SOURCE_WORK_SIZE);
+          sourceImage = octx.getImageData(0, 0, SOURCE_WORK_SIZE, SOURCE_WORK_SIZE);
+          render();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ---------- reset ----------
+    function resetAll() {
+      stopJob();
+      const defaults = { sizeSlider: '900', pinsSlider: '300', linesSlider: '4000', threadSlider: '0.15',
+        contrastSlider: '1.2', sharpnessSlider: '1.0', diameterSlider: '30', dpiSlider: '300' };
+      for (const [id, v] of Object.entries(defaults)) $(id).value = v;
+      colorSelect.value = 'dark';
+      qualitySelect.value = '400';
+      bgRemoveCheck.checked = false;
+      showPinNumbersCheck.checked = true;
+      updateLabels();
+      sourceImage = null;
+      result = null;
+      progressBar.style.width = '0%';
+      redrawPreview();
+      infoText.textContent = '↺ Reset to defaults · upload an image.';
+      fileInput.value = '';
+    }
+
+    function needResult() {
+      if (!result || result.sequence.length < 2) { infoText.textContent = '⚠️ Render first.'; return false; }
+      if (!result.done) { infoText.textContent = '⏳ Still computing — wait or press Stop.'; return false; }
+      return true;
+    }
+
+    // ---------- PDF export (true physical size) ----------
+    function exportPDF() {
+      if (!needResult()) return;
+      if (!window.jspdf) {
+        infoText.textContent = '❌ PDF library failed to load. Check your connection and try again.';
+        return;
+      }
+      const s = settings();
+      const r = result;
+      const exportSize = getExportSizePx();
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = exportCanvas.height = exportSize;
+      drawAll(exportCanvas, r, s.showNumbers);
+
+      const { jsPDF } = window.jspdf;
+      // canvas side in cm, so the circle on paper is exactly the chosen diameter
+      const artCm = r.diameterCm / RING;
+      const marginCm = 1;
+      const pageCm = artCm + marginCm * 2;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'cm', format: [pageCm, pageCm] });
+      pdf.addImage(exportCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', marginCm, marginCm, artCm, artCm);
+      addSequencePages(pdf, r);
+      pdf.save(`string-art-${r.diameterCm}cm-${r.pins}pins-${r.sequence.length - 1}lines.pdf`);
+      infoText.textContent =
+        `📄 PDF exported: ${r.diameterCm} cm circle at true size (${exportSize}px @ ${s.dpi} DPI) + pin-by-pin path.`;
+    }
+
+    // Steps grouped 10 per row with the running step number, so you can
+    // keep your place while stringing.
+    function sequenceRows(r) {
+      const seq = r.sequence.map(p => p + 1);
+      const rows = [];
+      for (let i = 0; i < seq.length; i += 10) {
+        const chunk = seq.slice(i, i + 10);
+        rows.push(`${String(i + 1).padStart(5, ' ')}:  ${chunk.join(' → ')}`);
+      }
+      return rows;
+    }
+
+    function addSequencePages(pdf, r) {
+      const pageW = 21, pageH = 29.7, margin = 1.5;
+      const fontPt = 10, lineH = (fontPt * 1.25) / 72 * 2.54;
+      const perPage = Math.floor((pageH - 2 * margin) / lineH);
+      const lines = [
+        `String path — ${r.pins} pins, ${r.sequence.length - 1} lines, ${r.diameterCm} cm, ${r.threadMm} mm thread`,
+        'Start at the first pin and run the thread to each next pin in order. Numbers on the left are the step count.',
+        '',
+        ...sequenceRows(r),
+      ];
+      pdf.setFont('courier', 'normal');
+      pdf.setFontSize(fontPt);
+      for (let i = 0; i < lines.length; i++) {
+        if (i % perPage === 0) pdf.addPage([pageW, pageH], 'portrait');
+        pdf.text(lines[i].replace(/→/g, '>'), margin, margin + lineH * (1 + i % perPage));
+      }
+    }
+
+    function exportPathText() {
+      if (!needResult()) return;
+      const r = result;
+      const text =
+        `String Art Path\nPins: ${r.pins}   Lines: ${r.sequence.length - 1}   Diameter: ${r.diameterCm} cm   Thread: ${r.threadMm} mm\n`
+        + `Pins are numbered clockwise from the top, starting at 1.\n\n`
+        + sequenceRows(r).join('\n') + '\n';
+      const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `string-art-path-${r.pins}pins-${r.sequence.length - 1}lines.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      infoText.textContent = '🧾 Path exported as a text file.';
+    }
+
+    // ---------- print ----------
+    function printArt() {
+      if (!needResult()) return;
+      const dataUrl = canvas.toDataURL('image/png');
+      const win = window.open('', '_blank');
+      if (!win) { infoText.textContent = '⚠️ Popup blocked. Please allow popups for print.'; return; }
+      win.document.write(`
+        <html><head><title>String Art Print Preview</title>
+        <style>body{margin:0;display:flex;justify-content:center;align-items:center;height:100vh;background:#fff}
+        img{max-width:100%;max-height:100%;object-fit:contain}</style>
+        </head><body><img src="${dataUrl}" onload="window.print();"></body></html>`);
+      win.document.close();
+    }
+
+    // ---------- event binding ----------
+    function init() {
+      // settings that change the pattern → recompute (debounced)
+      [pinsSlider, linesSlider, threadSlider, contrastSlider, sharpnessSlider, diameterSlider].forEach(el => {
+        el.addEventListener('input', updateLabels);
+        el.addEventListener('change', scheduleRender);
+      });
+      [colorSelect, qualitySelect, bgRemoveCheck].forEach(el => el.addEventListener('change', scheduleRender));
+
+      // display-only settings → just redraw
+      sizeSlider.addEventListener('input', updateLabels);
+      sizeSlider.addEventListener('change', () => { if (!job) redrawPreview(); });
+      showPinNumbersCheck.addEventListener('change', () => { if (!job) redrawPreview(); });
+      dpiSlider.addEventListener('input', updateLabels);
+
+      renderBtn.addEventListener('click', render);
+      stopBtn.addEventListener('click', stopped);
+      resetBtn.addEventListener('click', resetAll);
+      resetFiltersBtn.addEventListener('click', () => {
+        contrastSlider.value = '1.2';
+        sharpnessSlider.value = '1.0';
+        bgRemoveCheck.checked = false;
+        scheduleRender();
+      });
+      pdfBtn.addEventListener('click', exportPDF);
+      printBtn.addEventListener('click', printArt);
+      pathTxtBtn.addEventListener('click', exportPathText);
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) loadImage(e.target.files[0]);
+      });
+
+      updateLabels();
+      redrawPreview();
+    }
+
+    init();
+  })();
+</script>
+</body>
+</html>
