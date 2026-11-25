@@ -11,7 +11,7 @@ A personal grab-bag of small scripts, experiments, and utilities. Not polished, 
 | `Scraping_tools/` | Two scraper setups — one with BeautifulSoup, one with Scrapy |
 | `book_analyzer/` | Streamlit app for text/book analysis (word frequency, readability, etc.) |
 | `diagram_to_maremaid/` | Script to convert diagrams into Mermaid syntax |
-| `string_art/` | Generates string art patterns (HTML/JS + Python) |
+| `string_art/` | Generates string art patterns (HTML/JS + Python); current app: `string-art-pro-v5.html` |
 | `mixed/` | Miscellaneous one-off scripts (PDF conversion, reading, etc.) |
 | `jokes.md` | Exactly what it sounds like |
 

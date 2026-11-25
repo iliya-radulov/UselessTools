@@ -14,17 +14,25 @@ A design note on orientation: the app fits the **photo to the canvas** (crops/sc
 
 | Control | What it does |
 |---|---|
-| Preview canvas px | On-screen preview resolution only — doesn't affect the export or the computed pattern |
-| Pins | Number of pins around the circle (max 500) |
-| Lines | The *maximum* number of thread segments to draw — the algorithm may stop earlier on its own (see below) |
-| Thread width | Visual thickness of each line |
-| Contrast / Sharpness | Pre-processing applied to the photo before the path is calculated |
-| Remove background | Makes near-white areas transparent |
-| Show pin numbers | Toggle the numbered labels around the circle |
-| Diameter (cm) | Physical size of your hoop/board |
-| DPI | Print resolution — combined with diameter, sets the export pixel size |
+Current app: **`string-art-pro-v5.html`** (open it in a browser; no install needed).
 
-**Render** / **Apply filters** recompute the pattern from your current settings. The algorithm is deterministic — the same settings always produce the same pattern.
+| Control | What it does |
+|---|---|
+| Pins | Number of pins around the circle (max 500) |
+| Lines (maximum) | Upper limit on thread segments — the algorithm usually stops earlier on its own (see below) |
+| Thread thickness (mm) | The real diameter of your thread. Used by the calculation, not only for display: thinner thread means more lines and finer tones |
+| Thread / board | Black thread on a white board, or white thread on a black board (the pattern is computed for the one you pick) |
+| Detail | Size of the calculation grid: Fast 300 px, Normal 400 px, High 560 px |
+| Contrast / Sharpness | Pre-processing applied to the photo before the path is calculated |
+| Remove background | Turns near-white areas pure white, so no thread goes there |
+| Show pin numbers | Toggle the numbered labels around the circle |
+| Diameter (cm) | Diameter of your pin circle; the PDF prints it at exactly this size |
+| DPI | Print resolution of the PDF image |
+| Preview canvas px | On-screen resolution only — changing it redraws, it doesn't recompute |
+
+Changing any setting that affects the pattern recomputes it automatically. The pattern is drawn live while it is computed, and **Stop** keeps what has been computed so far. The algorithm is deterministic — the same settings always produce the same pattern.
+
+**Tips for a recognisable result:** use a photo with a clear subject and a plain light background (or tick *Remove background*), raise **Pins** to 300–500, and use thin thread (0.1–0.15 mm). With 500 pins, 0.08 mm thread and *High* detail, a computation takes around 20–30 s.
 
 ## Exporting
 
@@ -37,12 +45,14 @@ A design note on orientation: the app fits the **photo to the canvas** (crops/sc
 The current algorithm:
 
 - Maintains a **simulated rendering** of the artwork (starts blank) alongside a **target** derived from the photo (how dark each pixel should end up).
+- Models thread physically: one line covers *thread thickness ÷ grid-pixel size* of every pixel it crosses, and overlapping threads combine like layers of semi-transparent ink. The preview and the PDF are drawn with the same model, so what you see is what the calculation aimed for.
+- Never uses the same pin-to-pin chord twice, so the thread doesn't bounce back and forth between two pins.
 - For every candidate pin-to-pin line, traces its exact pixel coverage using **Xiaolin Wu's anti-aliased line algorithm**, and scores it by how much it would reduce total *squared error* between the simulation and the target — not just "how dark are the pixels it crosses."
 - Picks whichever candidate improves the picture the most, adds it, updates the simulation, and repeats.
 - **Stops itself early** once no remaining line would improve the picture further, rather than forcing out however many lines the slider asked for. The status bar and both exports report however many lines actually got used.
-- Runs the search on a fixed internal resolution independent of your preview size or export DPI, so pattern quality and generation time stay predictable no matter what you're eventually printing to. Larger settings (many pins, many lines) run in chunks with a live progress readout so the browser tab never freezes.
+- Runs the search on a fixed internal resolution independent of your preview size or export DPI, so pattern quality and generation time stay predictable no matter what you're eventually printing to. The search runs in a background Web Worker, so the page stays responsive.
 
-If a result looks too sparse, try raising the **Lines** cap — the squared-error model will use more of them if there's still room to improve, and stop on its own once there isn't.
+If the status says *limit reached*, raise **Lines**. If it stopped on its own and the picture still looks coarse, use thinner thread or more pins.
 
 ## Credits
 
@@ -60,4 +70,5 @@ No code was copied directly from either project — both were read for their app
 | v1 | Initial working app: upload, draw preview, PDF export, adjustable pins/lines/diameter/DPI. |
 | v2 | Fixed PDF export (page now matches real diameter instead of being cropped to A4, no more DOM-screenshot/blank-page bug), fixed pin numbers rendering inside the circle, added the exported pin-sequence text/PDF pages, first pass at a residual-based (subtract-until-satisfied) greedy algorithm. |
 | v3 | Replaced fixed-sample line scoring with exact Bresenham pixel tracing plus per-pin-pair caching, decoupled pattern computation from preview/export resolution, made generation async/chunked with a progress readout so large settings don't freeze the tab. |
-| v4 *(current)* | Replaced the residual model with proper simulated-render + squared-error scoring, switched line tracing to anti-aliased Wu's algorithm, added natural early-stopping. |
+| v4 | Replaced the residual model with proper simulated-render + squared-error scoring, switched line tracing to anti-aliased Wu's algorithm, added natural early-stopping. |
+| v5 *(current)* | Fixed the preview showing a photo negative (dark-thread pattern drawn as light thread on black) and the over-exposed look (preview lines were far heavier than the calculation assumed): thread is now modelled by its real thickness, the same way in calculation, preview and PDF. Added black-on-white / white-on-black choice, no chord reuse, centre crop instead of squashing the photo, round canvas (was stretched into an ellipse), working *Remove background*, computation in a Web Worker with live drawing and Stop, auto re-render, preview-size changes without recomputing, step-numbered path export, and the PDF circle printed at exactly the chosen diameter. |

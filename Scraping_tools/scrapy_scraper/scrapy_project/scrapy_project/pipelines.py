@@ -1,4 +1,5 @@
 from itemadapter import ItemAdapter
+from scrapy.exceptions import DropItem
 import json
 import logging
 from datetime import datetime
