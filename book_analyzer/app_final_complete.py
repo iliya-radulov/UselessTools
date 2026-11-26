@@ -13,6 +13,7 @@ from wordcloud import WordCloud
 import pandas as pd
 import numpy as np
 import re
+import unicodedata
 import matplotlib.pyplot as plt
 import ssl
 import os
@@ -239,9 +240,11 @@ def analyze_text(text, language='English', custom_stopwords=None, num_topics=3):
 
     stop_words = get_stopwords_for_language(language, custom_stopwords)
     
-    # Clean text - preserve non-English characters
-    clean_text = text.lower()
-    clean_text = re.sub(r'[^a-zA-Zа-яА-ЯёЁъЪюЮяЯіІїЇєЄґҐ\s]', ' ', clean_text)
+    # Clean text - keep the letters of every script (Greek, Cyrillic, accented
+    # Latin, ...). NFC first, so an accented letter is one character: in the
+    # decomposed form the accent would split the word.
+    clean_text = unicodedata.normalize('NFC', text).lower()
+    clean_text = re.sub(r'[\W\d_]+', ' ', clean_text)
     
     # Tokenize
     tokens = word_tokenize(clean_text)
@@ -252,7 +255,9 @@ def analyze_text(text, language='English', custom_stopwords=None, num_topics=3):
     fdist = nltk.FreqDist(tokens)
     
     # Get sentences
-    sentence_endings = r'[.!?…।।॥？！]'
+    # Greek writes the question mark as ';' - the Greek question mark U+037E, or a
+    # plain semicolon (only treated as a sentence end when the language is Greek)
+    sentence_endings = r'[.!?…।॥？！\u037e' + (';' if language == 'Greek' else '') + ']'
     sentences = [s.strip() for s in re.split(sentence_endings, text) if len(s.strip()) > 5]
     
     # Sentiment analysis
@@ -331,15 +336,18 @@ def analyze_text(text, language='English', custom_stopwords=None, num_topics=3):
         try:
             def count_syllables(word):
                 word = word.lower()
-                vowels = "aeiouyаеиоуыэюяіїє"
+                # Latin (incl. accented), Cyrillic and Greek (incl. tonos/dialytika)
+                vowels = ("aeiouyàáâãäåæèéêëìíîïòóôõöøœùúûüýÿ"
+                          "аеиоуыэюяіїєё"
+                          "αεηιουωάέήίόύώϊϋΐΰ")
                 count = 0
                 prev_char = ''
                 for char in word:
                     if char in vowels and prev_char not in vowels:
                         count += 1
                     prev_char = char
-                if word.endswith('e'):
-                    count -= 1
+                if language == 'English' and word.endswith('e'):
+                    count -= 1  # silent final e: an English rule only
                 if count == 0:
                     count = 1
                 return count
@@ -856,7 +864,9 @@ if uploaded_file or direct_text:
                     colormap='viridis',
                     width=800,
                     height=400
-                ).generate(results['clean_text'])
+                # from the stopword-filtered counts (same as the frequency table):
+                # WordCloud's own stopword list is English-only
+                ).generate_from_frequencies(dict(results['fdist']))
                 
                 fig, ax = plt.subplots(figsize=(14, 8))
                 ax.imshow(wordcloud, interpolation='bilinear')
